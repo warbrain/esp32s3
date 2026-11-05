@@ -1,0 +1,46 @@
+[
+  {
+    "path": "licenses/H-GTCRN-LICENSE",
+    "sha256": "4c0ee3b2f8357c5dd049eed10cedb97578ac51d99982f5ffd2ae0800f0325f72"
+  },
+  {
+    "path": "LICENSE",
+    "sha256": "8f0b762d062e1ec79a3e73189b29474051c0e957973f43146aefeb03f2e11581"
+  },
+  {
+    "path": "external/cJSON/LICENSE",
+    "sha256": "a36dda207c36db5818729c54e7ad4e8b0c6fba847491ba64f372c1a2037b6d5c"
+  },
+  {
+    "path": "external/ggml/AUTHORS",
+    "sha256": "2c51d74b1a0b46e074f6f4ef86942b136af196af778a2ac39f34b9a8e983eafb"
+  },
+  {
+    "path": "external/ggml/LICENSE",
+    "sha256": "bcd8ec749126d45cb06737d0690295d73df4b6e7e194205bcf91190368f27285"
+  },
+  {
+    "path": "external/libyaml/License",
+    "sha256": "c40112449f254b9753045925248313e9270efa36d226b22d82d4cc6c43c57f29"
+  },
+  {
+    "path": "external/sentencepiece/LICENSE",
+    "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+  },
+  {
+    "path": "external/sentencepiece/third_party/absl/LICENSE",
+    "sha256": "7871ddb0d7635157a82afc21720d795660a024c59652b7a5b1ed812355320fdc"
+  },
+  {
+    "path": "external/sentencepiece/third_party/darts_clone/LICENSE",
+    "sha256": "ed8437dc7358a40ef10afd3635ac1cd43c88fbaaaf6cd27c414f8ada5d68f447"
+  },
+  {
+    "path": "external/sentencepiece/third_party/esaxx/LICENSE",
+    "sha256": "c32d2b3a60ed4b71616dd544f0865e171631ce26d3a3855c43428e61cbf89d67"
+  },
+  {
+    "path": "external/sentencepiece/third_party/protobuf-lite/LICENSE",
+    "sha256": "f4df8b2457697851385d9ebb93267832c1dfa24e0e61881952f6b0c452663dc9"
+  }
+]
