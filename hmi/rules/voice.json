@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "rules": [
+    {
+      "id": "calculator",
+      "name": "启动计算器",
+      "enabled": true,
+      "cooldown_ms": 800,
+      "trigger": {"kind": "phrase", "pattern": "打开计算器", "min_confidence": 0},
+      "actions": [{"kind": "launch", "params": {"path": "calc.exe"}}]
+    },
+    {
+      "id": "return",
+      "name": "按下回车",
+      "enabled": true,
+      "cooldown_ms": 800,
+      "trigger": {"kind": "phrase", "pattern": "按下回车", "min_confidence": 0},
+      "actions": [{"kind": "key", "params": {"chord": "Return"}}]
+    },
+    {
+      "id": "clear-line",
+      "name": "清空一行",
+      "enabled": true,
+      "cooldown_ms": 800,
+      "trigger": {"kind": "phrase", "pattern": "清空一行", "min_confidence": 0},
+      "actions": [
+        {"kind": "key", "params": {"chord": "Ctrl+A"}},
+        {"kind": "key", "params": {"chord": "Delete"}}
+      ]
+    },
+    {
+      "id": "speak",
+      "name": "朗读",
+      "enabled": true,
+      "cooldown_ms": 800,
+      "trigger": {"kind": "phrase", "pattern": "朗读", "min_confidence": 0},
+      "actions": [{"kind": "speak", "params": {"text": "你好，语音操控已就绪。"}}]
+    }
+  ]
+}

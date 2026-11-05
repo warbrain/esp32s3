@@ -1,0 +1,33 @@
+# Build output
+build/
+managed_components/
+sdkconfig
+sdkconfig.old
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.exe
+*.pdb
+*.bin
+*.map
+
+# Models and assets
+models/
+*.gguf
+*.onnx
+*.safetensors
+*.wav
+
+# Docs are not tracked in this repository
+*.md
+docs/
+
+# IDE / OS
+.vs/
+.vscode/
+__pycache__/
+*.pyc
+Thumbs.db
+.DS_Store

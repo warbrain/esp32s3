@@ -1,0 +1,71 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "windows-vs2026",
+      "displayName": "Windows · Visual Studio 2026 · current build",
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "windows-ninja",
+      "displayName": "Windows · optional Ninja build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-ninja-cudnn",
+      "inherits": "windows-ninja",
+      "displayName": "Windows · optional CUDA/cuDNN build",
+      "binaryDir": "${sourceDir}/build/ninja-cudnn",
+      "cacheVariables": {
+        "HMI_ENABLE_AUDIOCPP_SDK_BUILD": "ON",
+        "HMI_AUDIOCPP_CPU_PROFILE": "portable",
+        "HMI_AUDIOCPP_SDK_CUDA": "ON",
+        "HMI_AUDIOCPP_SDK_CUDA_ARCHITECTURES": "89-real",
+        "HMI_AUDIOCPP_SDK_CUDNN": "ON",
+        "HMI_AUDIOCPP_SDK_VULKAN": "ON"
+      }
+    },
+    {
+      "name": "windows-performance",
+      "inherits": "windows-vs2026",
+      "displayName": "Windows · ggml performance diagnostics",
+      "cacheVariables": { "HMI_BUILD_GGML_KERNEL_PROBE": "ON" }
+    },
+    {
+      "name": "windows-sdk-portable",
+      "inherits": "windows-performance",
+      "displayName": "Windows · independent portable native SDK",
+      "binaryDir": "${sourceDir}/build/sdk-portable-host",
+      "cacheVariables": {
+        "HMI_ENABLE_AUDIOCPP_SDK_BUILD": "ON",
+        "HMI_AUDIOCPP_CPU_PROFILE": "portable",
+        "HMI_AUDIOCPP_SDK_OPENMP": "ON",
+        "HMI_AUDIOCPP_SDK_CUDA": "OFF",
+        "HMI_AUDIOCPP_SDK_VULKAN": "ON"
+      }
+    },
+    {
+      "name": "windows-sdk-avx2",
+      "inherits": "windows-sdk-portable",
+      "displayName": "Windows · independent AVX2 native SDK",
+      "binaryDir": "${sourceDir}/build/sdk-avx2-host",
+      "cacheVariables": { "HMI_AUDIOCPP_CPU_PROFILE": "avx2" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "windows-vs2026", "configuration": "Release" },
+    { "name": "debug", "configurePreset": "windows-vs2026", "configuration": "Debug" },
+    { "name": "ninja-release", "configurePreset": "windows-ninja" },
+    { "name": "ninja-sdk-cudnn", "configurePreset": "windows-ninja-cudnn", "targets": ["hmi_native_sdk_build"] },
+    { "name": "ggml-inventory", "configurePreset": "windows-performance", "configuration": "Release", "targets": ["hmi_ggml_inventory"] },
+    { "name": "ggml-performance", "configurePreset": "windows-performance", "configuration": "Release", "targets": ["hmi_ggml_perf_matrix"] },
+    { "name": "sdk-portable", "configurePreset": "windows-sdk-portable", "configuration": "Release", "targets": ["hmi_native_sdk_build"] },
+    { "name": "sdk-avx2", "configurePreset": "windows-sdk-avx2", "configuration": "Release", "targets": ["hmi_native_sdk_build"] }
+  ]
+}

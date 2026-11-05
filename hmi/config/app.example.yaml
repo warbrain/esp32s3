@@ -1,0 +1,36 @@
+﻿schema: 1
+voice:
+  backend: auto
+  threads: 4
+  tts_enabled: false
+  tts_prewarm: false
+  preview_interval_seconds: 1.0
+  refine: true
+  maximum_audio_seconds: 30
+  vad_enabled: true
+  vad_threshold: 0.35
+  hgtcrn_enabled: true
+  # Empty paths use the matching files in project/models/frontend.
+  vad_model: ""
+  hgtcrn_model: ""
+  # Empty model paths keep project-local models discovery and HMI_MODEL_DIR.
+  asr_model: ""
+  tts_model: ""
+audio:
+  # local = PC microphone/speakers, esp32 = the Waveshare board over UDP/Opus.
+  source: local
+  esp32_host: 172.16.30.145
+  esp32_port: 5000
+  # Board speaker volume, 0..100 (persisted on the board).
+  volume: 70
+rules:
+  file: rules/voice.json
+hotkeys:
+  hold: Ctrl+Alt
+  toggle: Ctrl+Shift+M
+logging:
+  level: info
+  file: logs/hmi.log
+  max_size_mb: 5
+  max_files: 3
+  console: false
