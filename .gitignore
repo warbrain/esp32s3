@@ -11,10 +11,10 @@ sdkconfig.old
 *.exe
 *.pdb
 *.bin
-*.map
 
-# Models and assets
-models/
+# Models and assets. Anchored on purpose: 3rd_party/native/source also has
+# directories called "models", and those are source code.
+/models/
 *.gguf
 *.onnx
 *.safetensors
@@ -22,7 +22,7 @@ models/
 
 # Docs are not tracked in this repository
 *.md
-docs/
+/docs/
 
 # IDE / OS
 .vs/
