@@ -1,4 +1,4 @@
-﻿#include "net/audio_link.hpp"
+#include "net/audio_link.hpp"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -183,10 +183,14 @@ void AudioLink::close()
     {
         impl_->worker.join();
     }
-    if (impl_->socket != INVALID_SOCKET)
     {
-        closesocket(impl_->socket);
-        impl_->socket = INVALID_SOCKET;
+        // Under the send lock so a concurrent send() cannot touch a closed handle.
+        std::lock_guard lock(impl_->send_mutex);
+        if (impl_->socket != INVALID_SOCKET)
+        {
+            closesocket(impl_->socket);
+            impl_->socket = INVALID_SOCKET;
+        }
     }
 }
 
@@ -197,7 +201,7 @@ bool AudioLink::running() const noexcept
 
 bool AudioLink::send(FrameType type, const void *payload, std::size_t size)
 {
-    if (impl_->socket == INVALID_SOCKET || size + kHeaderBytes > 1600)
+    if (size + kHeaderBytes > 1600)
     {
         return false;
     }
@@ -209,6 +213,10 @@ bool AudioLink::send(FrameType type, const void *payload, std::size_t size)
     packet[3] = 0;
 
     std::lock_guard lock(impl_->send_mutex);
+    if (impl_->socket == INVALID_SOCKET)
+    {
+        return false;
+    }
     put_u16(packet + 4, impl_->sequence++);
     put_u16(packet + 6, static_cast<std::uint16_t>(size));
     put_u32(packet + 8, static_cast<std::uint32_t>(

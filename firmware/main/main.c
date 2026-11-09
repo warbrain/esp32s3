@@ -55,7 +55,6 @@
 
 static const char *TAG = "bridge";
 
-#define SERVER_IP       CONFIG_AUDIO_BRIDGE_SERVER_IP
 #define SERVER_PORT     CONFIG_AUDIO_BRIDGE_SERVER_PORT
 
 #define SAMPLE_RATE     16000
@@ -68,7 +67,6 @@ static const char *TAG = "bridge";
 #define FRAME_MS        20
 #define OPUS_MAX_PACKET 512
 #define OPUS_UP_BITRATE 48000
-#define OPUS_DOWN_BITRATE 24000
 #define BTN_GPIO        GPIO_NUM_0          /* BOOT */
 
 enum { T_HELLO = 1, T_AUDIO_UP = 2, T_AUDIO_DOWN = 3, T_CTRL = 4, T_STATUS = 5 };
@@ -219,8 +217,8 @@ static esp_err_t opus_start(void)
         ESP_LOGE(TAG, "opus decoder create failed: %s", opus_strerror(err));
         return ESP_FAIL;
     }
-    ESP_LOGI(TAG, "opus ready: up %d bps stereo, down %d bps mono",
-             OPUS_UP_BITRATE, OPUS_DOWN_BITRATE);
+    ESP_LOGI(TAG, "opus ready: up %d bps stereo",
+             OPUS_UP_BITRATE);
     return ESP_OK;
 }
 
@@ -571,6 +569,7 @@ static lv_obj_t *s_cap_vol;
 static lv_obj_t *s_cap_bat;
 static lv_obj_t *s_cap_mic;
 static lv_obj_t *s_panel;
+static lv_obj_t *s_panel_volume;
 
 static void volume_apply(int value, bool persist)
 {
@@ -617,11 +616,14 @@ static lv_obj_t *glyph_label(lv_obj_t *parent, const char *symbol, int size, int
     return label;
 }
 
+/* Deliberately asynchronous: panels are also closed from a child button's
+ * click handler, and deleting the ancestor mid-dispatch would be use-after-free. */
 static void close_panel(void)
 {
     if (s_panel != NULL) {
-        lv_obj_delete(s_panel);
+        lv_obj_delete_async(s_panel);
         s_panel = NULL;
+        s_panel_volume = NULL;
     }
 }
 
@@ -660,14 +662,20 @@ static lv_obj_t *panel_open(const char *title, uint32_t tint)
 static void on_sound(lv_event_t *e);
 static void on_volume_up(lv_event_t *e);
 
+static void volume_step(int delta)
+{
+    volume_apply(s_volume + delta, true);
+    if (s_panel_volume != NULL) {
+        char text[8];
+        snprintf(text, sizeof(text), "%d%%", s_volume);
+        lv_label_set_text(s_panel_volume, text);
+    }
+}
+
 static void on_volume_down(lv_event_t *e)
 {
     (void)e;
-    volume_apply(s_volume - 10, true);
-    if (s_panel != NULL) {
-        close_panel();
-        on_sound(NULL);
-    }
+    volume_step(-10);
 }
 
 static void on_wlan(lv_event_t *e)
@@ -712,6 +720,7 @@ static void on_sound(lv_event_t *e)
     snprintf(percent, sizeof(percent), "%d%%", s_volume);
     lv_label_set_text(body, percent);
     lv_obj_align(body, LV_ALIGN_TOP_MID, 0, 70);
+    s_panel_volume = body;
 
     lv_obj_t *minus = lv_button_create(card);
     lv_obj_set_size(minus, 96, 64);
@@ -733,11 +742,7 @@ static void on_sound(lv_event_t *e)
 static void on_volume_up(lv_event_t *e)
 {
     (void)e;
-    volume_apply(s_volume + 10, true);
-    if (s_panel != NULL) {
-        close_panel();
-        on_sound(NULL);
-    }
+    volume_step(10);
 }
 
 static void set_caption(lv_obj_t *label, const char *text, char *cache, size_t cache_size)

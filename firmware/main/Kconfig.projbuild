@@ -1,13 +1,7 @@
-menu "Audio bridge"
-
-    config AUDIO_BRIDGE_SERVER_IP
-        string "PC server IPv4 address"
-        default "172.16.31.246"
-        help
-            The laptop that runs the ASR/TTS app and accepts the bridge connection.
+﻿menu "Audio bridge"
 
     config AUDIO_BRIDGE_SERVER_PORT
-        int "PC server TCP port"
+        int "UDP port the bridge listens on"
         default 5000
         range 1024 65535
 
