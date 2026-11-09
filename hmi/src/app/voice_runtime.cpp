@@ -1,4 +1,4 @@
-﻿#include "app/voice_runtime.hpp"
+#include "app/voice_runtime.hpp"
 
 #include "action/actions.hpp"
 #include "action/ui_input.hpp"
@@ -1175,9 +1175,11 @@ struct VoiceRuntime::Impl
                     }
                     const auto native = capture.device_format();
                     if (logger) logger->write(base::LogLevel::Info, "capture", "request_id=" +
-                        std::to_string(active_request_id.load()) + " microphone opened on shortcut; device_hz=" +
-                        std::to_string(native.sample_rate) + " stream_hz=16000 mono_channels=1 capture_channels=" +
-                        std::to_string(capture.stream_channels()));
+                        std::to_string(active_request_id.load()) + (use_board
+                            ? " capture started from the board (UDP/Opus uplink)"
+                            : " microphone opened on shortcut; device_hz=" + std::to_string(native.sample_rate) +
+                              " stream_hz=16000 mono_channels=1 capture_channels=" +
+                              std::to_string(capture.stream_channels())));
                     if (!released && !stopping.load()) status(VoiceState::Listening, "Listening... Release the shortcut to transcribe.");
                     queue_ready.notify_one();
                     continue;
