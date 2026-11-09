@@ -25,8 +25,11 @@ sdkconfig.old
 /hmi/logs/
 /hmi/config/app.yaml
 
-# Docs are not tracked in this repository
+# Docs are not tracked in this repository, but upstream files are: several
+# third-party CMakeLists require their README at configure time (CPack
+# resources), e.g. 3rd_party/native/source/external/sentencepiece.
 *.md
+!hmi/3rd_party/**/*.md
 /docs/
 
 # IDE / OS
