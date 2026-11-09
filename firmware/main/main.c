@@ -670,9 +670,15 @@ static lv_obj_t *s_cap_ssid;
 static lv_obj_t *s_cap_vol;
 static lv_obj_t *s_cap_bat;
 static lv_obj_t *s_cap_mic;
+static lv_obj_t *s_mic_tile;
+static lv_obj_t *s_mic_glow;
+static lv_obj_t *s_mic_ring;
+static lv_anim_t s_ring_anim;
+static lv_anim_t s_glow_anim;
+static bool s_ring_running;
+static void set_recording_motion(bool recording);
 static lv_obj_t *s_panel;
 static lv_obj_t *s_panel_volume;
-static lv_obj_t *s_mic_tile;
 
 static void volume_apply(int value, bool persist)
 {
@@ -883,17 +889,19 @@ static void refresh_captions(void)
         const uint32_t tint = s_talking ? 0xC0392B : 0x2F6FEB;
         lv_obj_set_style_bg_color(s_mic_tile, lv_color_hex(tint), 0);
         lv_obj_set_style_shadow_color(s_mic_tile, lv_color_hex(tint), 0);
+        set_recording_motion(s_talking);
     }
 }
 
-/* Board-side capture switch: the round UI had it on the screen, so a tap on
- * the microphone tile starts and stops the uplink without touching BOOT. */
+
 static void restore_mic_caption(lv_timer_t *timer)
 {
     (void)timer;
     refresh_captions();
 }
 
+/* Board-side capture switch: the round UI had it on the screen, so a tap on
+ * the microphone puck starts and stops the uplink without touching BOOT. */
 static void on_mic(lv_event_t *e)
 {
     (void)e;
@@ -916,6 +924,73 @@ static void on_mic(lv_event_t *e)
     refresh_captions();
 }
 
+/* ------------------------------------------------------------ ui motion */
+
+
+static void ring_rotate_cb(void *var, int32_t value)
+{
+    lv_arc_set_rotation((lv_obj_t *)var, (int16_t)value);
+}
+
+static void glow_opa_cb(void *var, int32_t value)
+{
+    lv_obj_set_style_opa((lv_obj_t *)var, (lv_opa_t)value, 0);
+}
+
+static void puck_pressed(lv_event_t *e)
+{
+    lv_obj_set_style_transform_scale((lv_obj_t *)lv_event_get_target(e), 243, 0);
+}
+
+static void puck_released(lv_event_t *e)
+{
+    lv_obj_set_style_transform_scale((lv_obj_t *)lv_event_get_target(e), 256, 0);
+}
+
+/* Recording: a bright 90 degree segment sweeps the ring and the glow breathes.
+ * Idle: a static 300 degree hairline, like a watch complication. */
+static void set_recording_motion(bool recording)
+{
+    if (s_mic_ring == NULL) {
+        return;
+    }
+    if (recording == s_ring_running) {
+        return;
+    }
+    s_ring_running = recording;
+
+    if (recording) {
+        lv_arc_set_angles(s_mic_ring, 0, 90);
+        lv_obj_set_style_arc_opa(s_mic_ring, LV_OPA_COVER, LV_PART_INDICATOR);
+        lv_obj_set_style_arc_color(s_mic_ring, lv_color_hex(0xFF9B8A), LV_PART_INDICATOR);
+
+        lv_anim_init(&s_ring_anim);
+        lv_anim_set_var(&s_ring_anim, s_mic_ring);
+        lv_anim_set_exec_cb(&s_ring_anim, ring_rotate_cb);
+        lv_anim_set_values(&s_ring_anim, 0, 360);
+        lv_anim_set_duration(&s_ring_anim, 1600);
+        lv_anim_set_repeat_count(&s_ring_anim, LV_ANIM_REPEAT_INFINITE);
+        lv_anim_start(&s_ring_anim);
+
+        lv_anim_init(&s_glow_anim);
+        lv_anim_set_var(&s_glow_anim, s_mic_glow);
+        lv_anim_set_exec_cb(&s_glow_anim, glow_opa_cb);
+        lv_anim_set_values(&s_glow_anim, LV_OPA_40, LV_OPA_10);
+        lv_anim_set_duration(&s_glow_anim, 900);
+        lv_anim_set_playback_duration(&s_glow_anim, 900);
+        lv_anim_set_repeat_count(&s_glow_anim, LV_ANIM_REPEAT_INFINITE);
+        lv_anim_start(&s_glow_anim);
+    } else {
+        lv_anim_delete(s_mic_ring, ring_rotate_cb);
+        lv_anim_delete(s_mic_glow, glow_opa_cb);
+        lv_arc_set_rotation(s_mic_ring, 0);
+        lv_arc_set_angles(s_mic_ring, 0, 300);
+        lv_obj_set_style_arc_opa(s_mic_ring, LV_OPA_30, LV_PART_INDICATOR);
+        lv_obj_set_style_arc_color(s_mic_ring, lv_color_hex(0x9CC4FF), LV_PART_INDICATOR);
+        lv_obj_set_style_opa(s_mic_glow, LV_OPA_20, 0);
+    }
+}
+
 static void ui_start(void)
 {
     if (display_start() == NULL) {
@@ -924,29 +999,85 @@ static void ui_start(void)
     }
     bsp_display_lock(0);
     lv_obj_t *screen = lv_screen_active();
-    lv_obj_set_style_bg_color(screen, lv_color_hex(0x0A1622), 0);
+    lv_obj_set_style_bg_color(screen, lv_color_hex(0x070B14), 0);
     lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_VER, 0);
-    lv_obj_set_style_bg_grad_color(screen, lv_color_hex(0x07101A), 0);
+    lv_obj_set_style_bg_grad_color(screen, lv_color_hex(0x0E1B33), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
 
+    /* Ambient depth: two faint discs, the panel is round so they read as light
+     * falling on glass rather than as decoration. */
+    lv_obj_t *ambient_top = lv_obj_create(screen);
+    lv_obj_set_size(ambient_top, 300, 300);
+    lv_obj_set_style_radius(ambient_top, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(ambient_top, lv_color_hex(0x2F6FEB), 0);
+    lv_obj_set_style_bg_opa(ambient_top, LV_OPA_10, 0);
+    lv_obj_set_style_border_width(ambient_top, 0, 0);
+    lv_obj_set_scrollable(ambient_top, false);
+    lv_obj_set_clickable(ambient_top, false);
+    lv_obj_align(ambient_top, LV_ALIGN_TOP_MID, 0, -150);
+
     lv_obj_t *title = lv_label_create(screen);
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0x8FA8C4), 0);
     lv_label_set_text(title, "AUDIO BRIDGE");
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 14);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 16);
 
-    /* The panel is round: everything has to live inside a 466 px circle, so the
-     * layout is one big glass puck plus satellites on the vertical/horizontal
-     * axes, where the circle is widest. */
+    /* Glow + progress ring sit behind the puck. */
+    s_mic_glow = lv_obj_create(screen);
+    lv_obj_set_size(s_mic_glow, 250, 250);
+    lv_obj_set_style_radius(s_mic_glow, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(s_mic_glow, lv_color_hex(0x2F6FEB), 0);
+    lv_obj_set_style_bg_opa(s_mic_glow, LV_OPA_20, 0);
+    lv_obj_set_style_border_width(s_mic_glow, 0, 0);
+    lv_obj_set_style_shadow_width(s_mic_glow, 70, 0);
+    lv_obj_set_style_shadow_color(s_mic_glow, lv_color_hex(0x2F6FEB), 0);
+    lv_obj_set_style_shadow_opa(s_mic_glow, LV_OPA_30, 0);
+    lv_obj_set_scrollable(s_mic_glow, false);
+    lv_obj_set_clickable(s_mic_glow, false);
+    lv_obj_align(s_mic_glow, LV_ALIGN_CENTER, 0, 6);
+
+    s_mic_ring = lv_arc_create(screen);
+    lv_obj_set_size(s_mic_ring, 238, 238);
+    lv_obj_align(s_mic_ring, LV_ALIGN_CENTER, 0, 6);
+    lv_arc_set_range(s_mic_ring, 0, 100);
+    lv_arc_set_value(s_mic_ring, 100);
+    lv_arc_set_bg_angles(s_mic_ring, 0, 360);
+    lv_arc_set_angles(s_mic_ring, 0, 300);
+    lv_obj_set_style_bg_opa(s_mic_ring, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(s_mic_ring, 0, 0);
+    lv_obj_set_style_arc_width(s_mic_ring, 2, LV_PART_MAIN);
+    lv_obj_set_style_arc_opa(s_mic_ring, LV_OPA_20, LV_PART_MAIN);
+    lv_obj_set_style_arc_color(s_mic_ring, lv_color_hex(0x9CC4FF), LV_PART_MAIN);
+    lv_obj_set_style_arc_width(s_mic_ring, 5, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_opa(s_mic_ring, LV_OPA_30, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(s_mic_ring, lv_color_hex(0x9CC4FF), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(s_mic_ring, true, LV_PART_INDICATOR);
+    lv_obj_remove_style(s_mic_ring, NULL, LV_PART_KNOB);
+    lv_obj_set_clickable(s_mic_ring, false);
+
+    /* Centre puck: glass, inner top highlight, press feedback. */
     s_mic_tile = lv_obj_create(screen);
-    lv_obj_set_size(s_mic_tile, 204, 204);
+    lv_obj_set_size(s_mic_tile, 200, 200);
     glass_style(s_mic_tile, 0x2F6FEB, LV_RADIUS_CIRCLE);
     lv_obj_set_clickable(s_mic_tile, true);
     lv_obj_add_event_cb(s_mic_tile, on_mic, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(s_mic_tile, puck_pressed, LV_EVENT_PRESSED, NULL);
+    lv_obj_add_event_cb(s_mic_tile, puck_released, LV_EVENT_RELEASED, NULL);
+    lv_obj_add_event_cb(s_mic_tile, puck_released, LV_EVENT_PRESS_LOST, NULL);
     lv_obj_set_scrollable(s_mic_tile, false);
     lv_obj_align(s_mic_tile, LV_ALIGN_CENTER, 0, 6);
 
-    glyph_label(s_mic_tile, LV_SYMBOL_AUDIO, 48, -30);
+    lv_obj_t *sheen = lv_obj_create(s_mic_tile);
+    lv_obj_set_size(sheen, 168, 84);
+    lv_obj_set_style_radius(sheen, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(sheen, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_bg_opa(sheen, LV_OPA_10, 0);
+    lv_obj_set_style_border_width(sheen, 0, 0);
+    lv_obj_set_scrollable(sheen, false);
+    lv_obj_set_clickable(sheen, false);
+    lv_obj_align(sheen, LV_ALIGN_TOP_MID, 0, -34);
+
+    glyph_label(s_mic_tile, LV_SYMBOL_AUDIO, 48, -26);
 
     lv_obj_t *cap = lv_label_create(s_mic_tile);
     lv_obj_set_style_text_font(cap, &lv_font_montserrat_24, 0);
@@ -954,7 +1085,7 @@ static void ui_start(void)
     lv_obj_set_width(cap, 180);
     lv_obj_set_style_text_align(cap, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_text(cap, "TAP");
-    lv_obj_align(cap, LV_ALIGN_CENTER, 0, 50);
+    lv_obj_align(cap, LV_ALIGN_CENTER, 0, 48);
     s_cap_mic = cap;
 
     struct Satellite {
@@ -964,32 +1095,38 @@ static void ui_start(void)
         lv_obj_t **caption;
         int x, y;
     };
-    static const struct Satellite satellites[3] = {
+    static const struct Satellite satellites[4] = {
         { LV_SYMBOL_WIFI, 0x2C6E9B, on_wlan, &s_cap_ssid, 0, -176 },
         { LV_SYMBOL_VOLUME_MAX, 0x6B4E9B, on_sound, &s_cap_vol, 176, 0 },
         { LV_SYMBOL_BATTERY_3, 0x2E7D5B, on_info, &s_cap_bat, 0, 176 },
+        { LV_SYMBOL_SETTINGS, 0x4A5568, on_info, NULL, -176, 0 },
     };
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         lv_obj_t *chip = lv_obj_create(screen);
-        lv_obj_set_size(chip, 100, 100);
+        lv_obj_set_size(chip, 96, 96);
         glass_style(chip, satellites[i].tint, LV_RADIUS_CIRCLE);
         lv_obj_set_clickable(chip, true);
         lv_obj_add_event_cb(chip, satellites[i].cb, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(chip, puck_pressed, LV_EVENT_PRESSED, NULL);
+        lv_obj_add_event_cb(chip, puck_released, LV_EVENT_RELEASED, NULL);
+        lv_obj_add_event_cb(chip, puck_released, LV_EVENT_PRESS_LOST, NULL);
         lv_obj_set_scrollable(chip, false);
         lv_obj_align(chip, LV_ALIGN_CENTER, satellites[i].x, satellites[i].y);
 
-        glyph_label(chip, satellites[i].symbol, 32, -14);
+        glyph_label(chip, satellites[i].symbol, 32, -12);
 
-        lv_obj_t *label = lv_label_create(chip);
-        lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
-        lv_obj_set_style_text_color(label, lv_color_hex(0xE6EFF9), 0);
-        lv_obj_set_width(label, 84);
-        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
-        lv_label_set_text(label, "--");
-        lv_obj_align(label, LV_ALIGN_CENTER, 0, 24);
-        *satellites[i].caption = label;
+        if (satellites[i].caption != NULL) {
+            lv_obj_t *label = lv_label_create(chip);
+            lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
+            lv_obj_set_style_text_color(label, lv_color_hex(0xC9D8EC), 0);
+            lv_obj_set_width(label, 84);
+            lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+            lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+            lv_label_set_text(label, "--");
+            lv_obj_align(label, LV_ALIGN_CENTER, 0, 26);
+            *satellites[i].caption = label;
+        }
     }
 
     refresh_captions();
