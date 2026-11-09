@@ -873,6 +873,21 @@ static void refresh_captions(void)
     set_caption(s_cap_mic, s_talking ? "ON AIR" : "idle", mic_cache, sizeof(mic_cache));
 }
 
+/* Board-side capture switch: the round UI had it on the screen, so a tap on
+ * the microphone tile starts and stops the uplink without touching BOOT. */
+static void on_mic(lv_event_t *e)
+{
+    (void)e;
+    if (s_talking) {
+        s_talking = false;
+        send_ctrl("ptt_up");
+    } else if (s_link_up) {
+        s_talking = true;
+        send_ctrl("ptt_down");
+    }
+    refresh_captions();
+}
+
 static void ui_start(void)
 {
     if (display_start() == NULL) {
@@ -901,7 +916,7 @@ static void ui_start(void)
         { LV_SYMBOL_WIFI, 0x2C6E9B, on_wlan, &s_cap_ssid },
         { LV_SYMBOL_VOLUME_MAX, 0x6B4E9B, on_sound, &s_cap_vol },
         { LV_SYMBOL_BATTERY_3, 0x2E7D5B, on_info, &s_cap_bat },
-        { LV_SYMBOL_AUDIO, 0x9B5E2C, on_info, &s_cap_mic },
+        { LV_SYMBOL_AUDIO, 0x9B5E2C, on_mic, &s_cap_mic },
     };
 
     for (int i = 0; i < 4; i++) {
