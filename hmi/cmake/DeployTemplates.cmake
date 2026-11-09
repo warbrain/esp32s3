@@ -4,7 +4,16 @@ if(NOT IS_DIRECTORY "${SOURCE_DIR}" OR NOT DESTINATION_DIR)
 endif()
 file(GLOB_RECURSE _files LIST_DIRECTORIES FALSE RELATIVE "${SOURCE_DIR}" "${SOURCE_DIR}/*")
 foreach(_file IN LISTS _files)
-  if(NOT EXISTS "${DESTINATION_DIR}/${_file}")
+  # Runtime files are user state: never overwrite an existing app.yaml.
+  # Templates (app.example.yaml) belong to the repository, so keep the deployed
+  # copy in sync instead of freezing the first one that was ever copied.
+  get_filename_component(_name "${_file}" NAME)
+  if(_name MATCHES "\\.example\\.ya?ml$")
+    set(_refresh TRUE)
+  else()
+    set(_refresh FALSE)
+  endif()
+  if(_refresh OR NOT EXISTS "${DESTINATION_DIR}/${_file}")
     get_filename_component(_parent "${DESTINATION_DIR}/${_file}" DIRECTORY)
     file(MAKE_DIRECTORY "${_parent}")
     file(COPY_FILE "${SOURCE_DIR}/${_file}" "${DESTINATION_DIR}/${_file}" ONLY_IF_DIFFERENT)
