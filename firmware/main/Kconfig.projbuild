@@ -1,4 +1,4 @@
-﻿menu "Audio bridge"
+menu "Audio bridge"
 
     config AUDIO_BRIDGE_SERVER_PORT
         int "UDP port the bridge listens on"

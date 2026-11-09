@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "audio/audio_render.hpp"
 #include "audio/stream_playback.hpp"

@@ -1,4 +1,4 @@
-﻿#include "engine/tts_session.hpp"
+#include "engine/tts_session.hpp"
 #include "engine/sdk_library.hpp"
 #include "engine/sdk_session.hpp"
 #include "engine/sdk_threads.hpp"

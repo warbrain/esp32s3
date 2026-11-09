@@ -39,3 +39,7 @@ __pycache__/
 *.pyc
 Thumbs.db
 .DS_Store
+
+# Local build helpers
+dependencies.lock
+idf-env.txt

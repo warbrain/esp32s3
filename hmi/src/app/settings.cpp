@@ -1,4 +1,4 @@
-﻿#include "app/settings.hpp"
+#include "app/settings.hpp"
 #include "base/config.hpp"
 #include "base/project_paths.hpp"
 

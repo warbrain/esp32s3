@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.24)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectPaths.cmake")
 hmi_require_build_path("${CMAKE_BINARY_DIR}" "Build output" "${CMAKE_CURRENT_SOURCE_DIR}")
 # Reject output overrides before targets inherit them; keep the existing layout.
