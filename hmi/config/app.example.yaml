@@ -2,14 +2,16 @@ schema: 1
 voice:
   backend: auto
   threads: 4
-  tts_enabled: false
+  # TTS is on in the working setup: the reply is spoken back on the board.
+  tts_enabled: true
   tts_prewarm: false
   preview_interval_seconds: 1.0
   refine: true
   maximum_audio_seconds: 30
   vad_enabled: true
   vad_threshold: 0.35
-  hgtcrn_enabled: true
+  # HF enhancement stays off until its model is tuned for the board microphone.
+  hgtcrn_enabled: false
   # Empty paths use the matching files in project/models/frontend.
   vad_model: ""
   hgtcrn_model: ""
