@@ -1,4 +1,4 @@
-﻿schema: 1
+schema: 1
 voice:
   backend: auto
   threads: 4
@@ -18,7 +18,10 @@ voice:
   tts_model: ""
 audio:
   # local = PC microphone/speakers, esp32 = the Waveshare board over UDP/Opus.
-  source: local
+  # This project is paired with the board, so the board is the default source:
+  # with "local" a machine that has no usable capture device fails at startup
+  # with "cannot start microphone".
+  source: esp32
   esp32_host: 172.16.30.145
   esp32_port: 5000
   # Board speaker volume, 0..100 (persisted on the board).
