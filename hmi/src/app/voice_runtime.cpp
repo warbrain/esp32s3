@@ -1565,6 +1565,16 @@ struct VoiceRuntime::Impl
                     if (result.ok) result.detail = speech_error.empty() ? "speech completed" : speech_error;
                     else if (!speech_error.empty()) result.detail = speech_error;
                 }
+                if (item.kind == "text" && result.ok && job.event.text_ready_ms < 0)
+                {
+                    job.event.text_ready_ms = static_cast<double>(milliseconds() - job.event.at_ms);
+                }
+                if (item.kind == "speak" && job.event.speech_end_ms < 0)
+                {
+                    // With the board as the sink this is "reply audio handed to the
+                    // player thread": the real-time pacing happens there, not here.
+                    job.event.speech_end_ms = static_cast<double>(milliseconds() - job.event.at_ms);
+                }
                 if (!job.event.action.empty()) job.event.action += " -> ";
                 job.event.action += item.kind;
                 job.event.detail += "; " + result.via + ": " + result.detail;
@@ -2301,10 +2311,17 @@ struct VoiceRuntime::Impl
                     {
                         return false;
                     }
+                    // A new reply replaces whatever the board is still playing.
+                    board_audio->cancel_playback();
                     audio::AudioBuffer buffer;
                     for (;;)
                     {
-                        if (cancelled && cancelled()) return true;
+                        if (cancelled && cancelled())
+                        {
+                            // Queued audio must not outlive a cancelled reply.
+                            board_audio->cancel_playback();
+                            return true;
+                        }
                         const auto state = read(buffer, out_error);
                         if (state == audio::detail::StreamRead::Pending)
                         {
@@ -2313,8 +2330,10 @@ struct VoiceRuntime::Impl
                         }
                         if (state == audio::detail::StreamRead::Finished) return true;
                         if (state == audio::detail::StreamRead::Failed) return false;
+                        // play() only enqueues; the player thread paces the frames,
+                        // so the result is not delayed by the playback duration.
                         if (!board_audio->play(buffer.samples.data(), buffer.samples.size(),
-                                               buffer.sample_rate, cancelled))
+                                               buffer.sample_rate))
                         {
                             if (out_error) *out_error = "board playback failed";
                             return false;

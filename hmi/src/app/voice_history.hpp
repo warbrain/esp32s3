@@ -73,6 +73,8 @@ inline util::json::Value::Object voice_event_fields(const VoiceEvent &event, std
         {"confidence", Value(std::isfinite(event.confidence) ? static_cast<double>(event.confidence) : -1.0)},
         {"latency_ms", history_number(event.latency_ms)}, {"asr_ms", history_number(event.asr_ms)},
         {"tts_ms", history_number(event.tts_ms)}, {"queue_ms", history_number(event.queue_ms)},
+        {"text_ready_ms", history_number(event.text_ready_ms)},
+        {"speech_end_ms", history_number(event.speech_end_ms)},
         {"rule_ms", history_number(event.rule_ms)}, {"action_ms", history_number(event.action_ms)},
         {"stop_reason", Value(event.stop_reason)}};
     if (valid_input_delivery(event.input_delivery)) fields.emplace("input_delivery", Value(event.input_delivery));
@@ -130,6 +132,8 @@ inline bool read_voice_event(std::string_view line, VoiceEvent &out)
     if (event.latency_ms < 0.0) event.latency_ms = -1.0;
     event.asr_ms = number("asr_ms", -1.0);
     event.tts_ms = number("tts_ms", -1.0);
+    event.text_ready_ms = number("text_ready_ms", -1.0);
+    event.speech_end_ms = number("speech_end_ms", -1.0);
     event.queue_ms = number("queue_ms", -1.0);
     event.rule_ms = number("rule_ms", -1.0);
     event.action_ms = number("action_ms", -1.0);

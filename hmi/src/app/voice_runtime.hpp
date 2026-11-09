@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "intent/rule.hpp"
 #include "input/hotkey.hpp"
@@ -78,6 +78,8 @@ struct VoiceEvent
     std::int64_t recorded_at_ms = 0; // Unix epoch milliseconds when the outcome is published; zero before recording.
     double asr_ms = -1.0; // This utterance's preview and final inference time; negative when not applicable.
     double tts_ms = -1.0; // This accepted speech request's synthesis time, excluding playback waits; negative when unavailable.
+    double text_ready_ms = -1.0; // Request-to-text-delivered time; negative when no text was injected.
+    double speech_end_ms = -1.0; // Request-to-reply-queued time (playback itself runs on the player thread); negative when not spoken.
     std::uint64_t request_id = 0; // Shared by capture, recognition, input and automatic readback.
     double queue_ms = -1.0;
     double rule_ms = -1.0;

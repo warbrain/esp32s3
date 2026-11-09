@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "net/audio_link.hpp"
 
@@ -30,10 +30,19 @@ public:
     void stop();
     bool running() const noexcept;
 
-    // Pushes 16 kHz mono float to the board's speaker in 20 ms Opus frames.
-    // Blocks for the duration of the buffer; cancelled is polled between frames.
-    bool play(const float *samples, std::size_t frames, int sample_rate = 16000,
-              const std::function<bool()> &cancelled = {});
+    // Queues 16 kHz mono float for the board's speaker and returns immediately;
+    // a dedicated player thread encodes and paces 20 ms Opus frames in real time.
+    // Use cancel_playback() to drop queued audio when the reply is cancelled.
+    bool play(const float *samples, std::size_t frames, int sample_rate = 16000);
+
+    // Drops every queued buffer and stops the item being sent.
+    void cancel_playback();
+
+    // Blocks until the player thread has drained the queue (shutdown/tests).
+    void flush_playback();
+
+    // Buffers still waiting for the player thread.
+    std::size_t playback_backlog() const;
 
     // Starts or stops the board's uplink without closing the link; TTS playback
     // must keep working after the microphone is released.
