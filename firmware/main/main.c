@@ -67,10 +67,16 @@ static volatile uint32_t s_mic_dropped;
 static volatile uint32_t s_encode_errors;
 static volatile uint32_t s_send_errors;
 static volatile uint32_t s_decode_errors;
+static volatile uint32_t s_down_idle;
+static volatile int64_t s_down_last_us;
 
 /* Battery state, filled by the PMU poll, reported by telemetry. */
 static int s_battery_percent = -1;
 static int s_battery_mv;
+static int s_battery_current_ma;
+static bool s_battery_present;
+static bool s_battery_vbus;
+static bool s_battery_from_gauge;
 
 #define SERVER_PORT     CONFIG_AUDIO_BRIDGE_SERVER_PORT
 
@@ -313,55 +319,68 @@ static void *spk_task(void *arg)
     static int16_t stereo[FRAME_SAMPLES * CHANNELS];
     static int16_t mono[FRAME_SAMPLES];
 
-    while (1) {
-        size_t size = 0;
-        void *item = xRingbufferReceive(s_down_ring, &size, pdMS_TO_TICKS(20));
-        int samples = 0;
-        if (item != NULL) {
-            if (xSemaphoreTake(s_opus_lock, pdMS_TO_TICKS(100)) == pdTRUE) {
-                samples = opus_decode(s_dec, (const uint8_t *)item, size, mono, FRAME_SAMPLES, 0);
-                xSemaphoreGive(s_opus_lock);
+        while (1) {
+            size_t size = 0;
+            const int64_t now_us = esp_timer_get_time();
+            void *item = xRingbufferReceive(s_down_ring, &size, pdMS_TO_TICKS(20));
+            int samples = 0;
+            if (item != NULL) {
+                if (xSemaphoreTake(s_opus_lock, pdMS_TO_TICKS(100)) == pdTRUE) {
+                    samples = opus_decode(s_dec, (const uint8_t *)item, size, mono, FRAME_SAMPLES, 0);
+                    xSemaphoreGive(s_opus_lock);
+                }
+                vRingbufferReturnItem(s_down_ring, item);
+                if (samples < 0) {
+                    s_decode_errors++;
+                    samples = 0;
+                } else {
+                    s_down_frames++;
+                    s_down_last_us = now_us;
+                }
             }
-            vRingbufferReturnItem(s_down_ring, item);
-            if (samples < 0) {
-                s_decode_errors++;
-                samples = 0;
-            } else {
-                s_down_frames++;
+            if (samples <= 0) {
+                /* Silence while a stream is flowing is an underrun; silence with
+                 * nothing to play is just the idle codec clock. */
+                if (now_us - s_down_last_us < 1000000) {
+                    s_down_underruns++;
+                } else {
+                    s_down_idle++;
+                }
+                memset(mono, 0, sizeof(mono));
             }
+            /* The speaker codec runs on the shared stereo bus. */
+            for (int i = 0; i < FRAME_SAMPLES; i++) {
+                int16_t v = (i < samples) ? mono[i] : 0;
+                stereo[2 * i] = v;
+                stereo[2 * i + 1] = v;
+            }
+            esp_codec_dev_write(s_spk, stereo, sizeof(stereo));
         }
-        if (samples <= 0) {
-            s_down_underruns++;
-            memset(mono, 0, sizeof(mono));
-        }
-        /* The speaker codec runs on the shared stereo bus. */
-        for (int i = 0; i < FRAME_SAMPLES; i++) {
-            int16_t v = (i < samples) ? mono[i] : 0;
-            stereo[2 * i] = v;
-            stereo[2 * i + 1] = v;
-        }
-        esp_codec_dev_write(s_spk, stereo, sizeof(stereo));
-    }
     return NULL;
 }
 
 /* --------------------------------------------------------------- telemetry */
 
+static void battery_update(void);
+
 /* One line every five seconds: a support call should be answerable from a
  * serial capture alone, without reproducing the problem. */
+static void battery_update(void);
+
 static void telemetry_task(void *arg)
 {
     (void)arg;
-    uint32_t up_frames = 0, up_bytes = 0, down_frames = 0, down_under = 0;
+    uint32_t up_frames = 0, up_bytes = 0, down_frames = 0, down_under = 0, down_idle = 0;
     uint32_t mic_frames = 0, mic_errors = 0, mic_dropped = 0;
     uint32_t enc_err = 0, send_err = 0, dec_err = 0;
     int64_t window_start = esp_timer_get_time();
 
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(5000));
+        battery_update();
 
         const uint32_t cur_up = s_up_frames, cur_bytes = s_up_bytes;
-        const uint32_t cur_down = s_down_frames, cur_under = s_down_underruns;
+        const uint32_t cur_down = s_down_frames, cur_under = s_down_underruns, cur_idle = s_down_idle;
         const uint32_t cur_mic = s_mic_frames, cur_mic_err = s_mic_errors, cur_mic_drop = s_mic_dropped;
         const uint32_t cur_enc = s_encode_errors, cur_send = s_send_errors, cur_dec = s_decode_errors;
         const int64_t now = esp_timer_get_time();
@@ -379,21 +398,24 @@ static void telemetry_task(void *arg)
 
         ESP_LOGI(TAG,
                  "telemetry: mic=%.1ffps drop=%u err=%u | up=%.1ffps/%.1fkbps | "
-                 "down=%.1ffps under=%u dec_err=%u enc_err=%u send_err=%u | "
-                 "heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d bat=%d%%/%dmV up=%llds",
+                 "down=%.1ffps under=%u idle=%u dec_err=%u enc_err=%u send_err=%u | "
+                 "heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d | "
+                 "bat=%d%%/%dmV chg=%dmA vbus=%d gauge=%d up=%llds",
                  (cur_mic - mic_frames) / secs, (unsigned)(cur_mic_drop - mic_dropped),
                  (unsigned)(cur_mic_err - mic_errors),
                  (cur_up - up_frames) / secs, (cur_bytes - up_bytes) * 8.0 / 1000.0 / secs,
                  (cur_down - down_frames) / secs, (unsigned)(cur_under - down_under),
+                 (unsigned)(cur_idle - down_idle),
                  (unsigned)(cur_dec - dec_err), (unsigned)(cur_enc - enc_err), (unsigned)(cur_send - send_err),
                  (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024),
                  (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024),
                  (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024),
                  rssi, channel, s_volume, s_battery_percent, s_battery_mv,
+                 s_battery_current_ma, s_battery_vbus ? 1 : 0, s_battery_from_gauge ? 1 : 0,
                  (long long)(now / 1000000));
 
         up_frames = cur_up; up_bytes = cur_bytes;
-        down_frames = cur_down; down_under = cur_under;
+        down_frames = cur_down; down_under = cur_under; down_idle = cur_idle;
         mic_frames = cur_mic; mic_errors = cur_mic_err; mic_dropped = cur_mic_drop;
         enc_err = cur_enc; send_err = cur_send; dec_err = cur_dec;
         window_start = now;
@@ -507,29 +529,82 @@ static bool pmu_write(uint8_t reg, uint8_t value)
 
 /* The AXP2101 gates its ADCs; without enabling the battery channel the
  * voltage registers read back as zero. */
+/* AXP2101 gauge/ADC registers (see the datasheet and XPowersLib). */
+#define AXP_STATUS1        0x00  // bit5 VBUS good, bit3 battery connected
+#define AXP_ADC_CH_CTRL    0x30  // bit0 battery voltage measurement
+#define AXP_BAT_VOLT_H     0x34  // 14-bit, 1 mV/LSB
+#define AXP_BAT_VOLT_L     0x35
+#define AXP_CHG_CURR_H     0x3C
+#define AXP_CHG_CURR_L     0x3D
+#define AXP_BAT_PERCENT    0xA4  // E-gauge state of charge
+
+/* Linear interpolation over the discharge curve of a single Li-ion cell.
+ * The gauge register is preferred; this is only the fallback. */
+static int soc_from_voltage(int mv)
+{
+    static const struct {
+        int mv;
+        int soc;
+    } curve[] = {
+        {4200, 100}, {4150, 95}, {4100, 90}, {4050, 85}, {4000, 80}, {3950, 75},
+        {3900, 70},  {3850, 65}, {3800, 60}, {3750, 55}, {3700, 45}, {3650, 35},
+        {3600, 25},  {3550, 15}, {3500, 8},  {3400, 3},  {3300, 0},
+    };
+    if (mv >= curve[0].mv) return 100;
+    const int last = (int)(sizeof(curve) / sizeof(curve[0])) - 1;
+    if (mv <= curve[last].mv) return 0;
+    for (int i = 0; i < last; i++) {
+        if (mv <= curve[i].mv && mv >= curve[i + 1].mv) {
+            const int span_mv = curve[i].mv - curve[i + 1].mv;
+            const int span_soc = curve[i].soc - curve[i + 1].soc;
+            return curve[i + 1].soc + (mv - curve[i + 1].mv) * span_soc / span_mv;
+        }
+    }
+    return 0;
+}
+
+/* Battery state from the PMU: E-gauge percentage when it is valid, voltage
+ * and pack current always, so telemetry can show charge/discharge behaviour. */
 static void battery_update(void)
 {
-    uint8_t adc = 0;
-    if (pmu_read(0x30, &adc, 1) && !(adc & 0x01)) {
-        pmu_write(0x30, (uint8_t)(adc | 0x01));
+    s_battery_present = false;
+    s_battery_vbus = false;
+
+    uint8_t status = 0, adc = 0;
+    if (pmu_read(AXP_STATUS1, &status, 1)) {
+        s_battery_present = (status & 0x08) != 0;
+        s_battery_vbus = (status & 0x20) != 0;
+    }
+    if (pmu_read(AXP_ADC_CH_CTRL, &adc, 1) && !(adc & 0x01)) {
+        pmu_write(AXP_ADC_CH_CTRL, (uint8_t)(adc | 0x01));
     }
 
     uint8_t raw[2] = {0};
     s_battery_mv = 0;
-    if (pmu_read(0x34, raw, 2)) {
+    if (pmu_read(AXP_BAT_VOLT_H, raw, 2)) {
         s_battery_mv = ((raw[0] & 0x3F) << 8) | raw[1];
+    }
+
+    s_battery_current_ma = 0;
+    if (pmu_read(AXP_CHG_CURR_H, raw, 2)) {
+        s_battery_current_ma = (((raw[0] & 0x1F) << 8) | raw[1]) * 2;
     }
 
     s_battery_percent = -1;
     uint8_t soc = 0;
-    if (pmu_read(0xA4, &soc, 1) && soc <= 100) {
-        s_battery_percent = soc;
+    if (pmu_read(AXP_BAT_PERCENT, &soc, 1) && soc <= 100) {
+        s_battery_percent = soc;   // E-gauge result, already coulomb-counted
+        s_battery_from_gauge = true;
+    } else if (s_battery_mv > 3000) {
+        s_battery_percent = soc_from_voltage(s_battery_mv);
+        s_battery_from_gauge = false;
     }
-    if (s_battery_percent < 0 && s_battery_mv > 3000) {
-        int pct = (s_battery_mv - 3500) * 100 / 700;
-        s_battery_percent = pct < 0 ? 0 : (pct > 100 ? 100 : pct);
+
+    if (!s_battery_present && s_battery_percent > 0) {
+        s_battery_percent = -1;   // no pack attached: do not report a guess
     }
 }
+
 
 /* The stock BSP asks for a 50-line PSRAM draw buffer, so every flush needs a
  * 46 kB contiguous DMA bounce buffer; that intermittently fails once the audio
