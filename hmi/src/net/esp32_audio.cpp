@@ -1,4 +1,4 @@
-﻿#include "net/esp32_audio.hpp"
+#include "net/esp32_audio.hpp"
 
 #include <opus.h>
 
@@ -194,7 +194,13 @@ bool Esp32Audio::play(const float *samples, std::size_t frames, int sample_rate,
     impl_->encoded.resize(400);
     std::vector<std::int16_t> pcm(static_cast<std::size_t>(kFrameSamples));
 
-    for (std::size_t offset = 0; offset + kFrameSamples <= frames; offset += kFrameSamples)
+    // Absolute schedule: sleep_for(20ms) would add the encode time on top of
+    // every frame and drift slower than real time, which drains the board's
+    // jitter buffer and makes playback stutter.
+    const auto playback_started = std::chrono::steady_clock::now();
+    std::size_t frame_index = 0;
+
+    for (std::size_t offset = 0; offset + kFrameSamples <= frames; offset += kFrameSamples, ++frame_index)
     {
         if (cancelled && cancelled())
         {
@@ -220,8 +226,9 @@ bool Esp32Audio::play(const float *samples, std::size_t frames, int sample_rate,
             if (sent) impl_->stats.frames_sent++;
             else impl_->stats.send_errors++;
         }
-        // Real-time pacing: the board buffers about 200 ms on its side.
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        // Real-time pacing against an absolute deadline; the board buffers
+        // roughly 200 ms on its side.
+        std::this_thread::sleep_until(playback_started + std::chrono::milliseconds(20) * (frame_index + 1));
     }
     return true;
 }
