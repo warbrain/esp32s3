@@ -1,4 +1,4 @@
-﻿// ESP32-S3-Touch-AMOLED-1.75C audio bridge.
+// ESP32-S3-Touch-AMOLED-1.75C audio bridge.
 //
 // The board is a thin audio endpoint for a PC-side ASR/TTS app:
 //   ES7210 mic  -> 16 kHz mono s16le -> TCP frames -> PC
@@ -31,6 +31,7 @@
 #include "esp_check.h"
 #include "esp_system.h"
 #include "esp_timer.h"
+#include "esp_heap_caps.h"
 #include "esp_pthread.h"
 #include <pthread.h>
 #include "lwip/sockets.h"
@@ -54,6 +55,22 @@
 #include "opus.h"
 
 static const char *TAG = "bridge";
+
+/* Counters sampled by telemetry_task(); one writer each, so plain increments. */
+static volatile uint32_t s_up_frames;
+static volatile uint32_t s_up_bytes;
+static volatile uint32_t s_down_frames;
+static volatile uint32_t s_down_underruns;
+static volatile uint32_t s_mic_frames;
+static volatile uint32_t s_mic_errors;
+static volatile uint32_t s_mic_dropped;
+static volatile uint32_t s_encode_errors;
+static volatile uint32_t s_send_errors;
+static volatile uint32_t s_decode_errors;
+
+/* Battery state, filled by the PMU poll, reported by telemetry. */
+static int s_battery_percent = -1;
+static int s_battery_mv;
 
 #define SERVER_PORT     CONFIG_AUDIO_BRIDGE_SERVER_PORT
 
@@ -228,10 +245,6 @@ static void mic_task(void *arg)
 {
     (void)arg;
     static int16_t buf[FRAME_SAMPLES * CHANNELS];
-    uint32_t frames = 0;
-    uint32_t errors = 0;
-    uint32_t dropped = 0;
-    int64_t window_start = esp_timer_get_time();
 
     while (1) {
         if (!s_talking || !s_link_up) {
@@ -240,26 +253,15 @@ static void mic_task(void *arg)
         }
         int rc = esp_codec_dev_read(s_mic, buf, sizeof(buf));
         if (rc != ESP_CODEC_DEV_OK) {
-            errors++;
+            s_mic_errors++;
             ESP_LOGW(TAG, "mic read rc=%d", rc);
             vTaskDelay(pdMS_TO_TICKS(20));
             continue;
         }
         if (xRingbufferSend(s_up_ring, buf, sizeof(buf), 0) != pdTRUE) {
-            dropped++;
+            s_mic_dropped++;
         }
-        frames++;
-
-        int64_t now = esp_timer_get_time();
-        if (now - window_start >= 2000000) {
-            ESP_LOGI(TAG, "capture %.1f fps (want 50), %u read errors, %u dropped",
-                     frames * 1e6 / (double)(now - window_start),
-                     (unsigned)errors, (unsigned)dropped);
-            frames = 0;
-            errors = 0;
-            dropped = 0;
-            window_start = now;
-        }
+        s_mic_frames++;
     }
 }
 
@@ -269,11 +271,6 @@ static void *tx_task(void *arg)
 {
     (void)arg;
     static uint8_t packet[OPUS_MAX_PACKET];
-
-    uint32_t sent = 0;
-    uint32_t window_frames = 0;
-    uint32_t window_bytes = 0;
-    int64_t window_start = esp_timer_get_time();
 
     TickType_t last_wake = xTaskGetTickCount();
     const TickType_t period = pdMS_TO_TICKS(FRAME_MS);
@@ -292,30 +289,17 @@ static void *tx_task(void *arg)
                         packet, sizeof(packet));
         xSemaphoreGive(s_opus_lock);
         if (n <= 0) {
-            ESP_LOGW(TAG, "opus encode failed: %d", n);
+            s_encode_errors++;
         } else if (s_link_up) {
             if (send_frame(T_AUDIO_UP, 0, packet, (uint16_t)n) == 0) {
-                window_frames++;
-                window_bytes += (uint32_t)n;
+                s_up_frames++;
+                s_up_bytes += (uint32_t)n;
             } else {
-                ESP_LOGW(TAG, "uplink send failed errno=%d", errno);
+                s_send_errors++;
             }
         }
 
         vRingbufferReturnItem(s_up_ring, item);
-        sent++;
-        int64_t now = esp_timer_get_time();
-        if (now - window_start >= 2000000) {
-            double secs = (now - window_start) / 1e6;
-            ESP_LOGI(TAG, "tx %.1f fps, %u B/s (%u kbps), total %u",
-                     window_frames / secs,
-                     (unsigned)(window_bytes / secs),
-                     (unsigned)(window_bytes * 8 / secs / 1000),
-                     (unsigned)sent);
-            window_frames = 0;
-            window_bytes = 0;
-            window_start = now;
-        }
     }
     return NULL;
 }
@@ -328,9 +312,6 @@ static void *spk_task(void *arg)
     (void)arg;
     static int16_t stereo[FRAME_SAMPLES * CHANNELS];
     static int16_t mono[FRAME_SAMPLES];
-    uint32_t underruns = 0;
-    uint32_t window_frames = 0;
-    int64_t window_start = esp_timer_get_time();
 
     while (1) {
         size_t size = 0;
@@ -343,12 +324,14 @@ static void *spk_task(void *arg)
             }
             vRingbufferReturnItem(s_down_ring, item);
             if (samples < 0) {
-                ESP_LOGW(TAG, "opus decode failed: %d", samples);
+                s_decode_errors++;
                 samples = 0;
+            } else {
+                s_down_frames++;
             }
         }
         if (samples <= 0) {
-            underruns++;
+            s_down_underruns++;
             memset(mono, 0, sizeof(mono));
         }
         /* The speaker codec runs on the shared stereo bus. */
@@ -358,19 +341,65 @@ static void *spk_task(void *arg)
             stereo[2 * i + 1] = v;
         }
         esp_codec_dev_write(s_spk, stereo, sizeof(stereo));
-
-        window_frames++;
-        int64_t now = esp_timer_get_time();
-        if (now - window_start >= 5000000) {
-            ESP_LOGI(TAG, "playback %u frames, %u silent (no downlink)",
-                     (unsigned)window_frames, (unsigned)underruns);
-            window_frames = 0;
-            underruns = 0;
-            window_start = now;
-        }
     }
     return NULL;
 }
+
+/* --------------------------------------------------------------- telemetry */
+
+/* One line every five seconds: a support call should be answerable from a
+ * serial capture alone, without reproducing the problem. */
+static void telemetry_task(void *arg)
+{
+    (void)arg;
+    uint32_t up_frames = 0, up_bytes = 0, down_frames = 0, down_under = 0;
+    uint32_t mic_frames = 0, mic_errors = 0, mic_dropped = 0;
+    uint32_t enc_err = 0, send_err = 0, dec_err = 0;
+    int64_t window_start = esp_timer_get_time();
+
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(5000));
+
+        const uint32_t cur_up = s_up_frames, cur_bytes = s_up_bytes;
+        const uint32_t cur_down = s_down_frames, cur_under = s_down_underruns;
+        const uint32_t cur_mic = s_mic_frames, cur_mic_err = s_mic_errors, cur_mic_drop = s_mic_dropped;
+        const uint32_t cur_enc = s_encode_errors, cur_send = s_send_errors, cur_dec = s_decode_errors;
+        const int64_t now = esp_timer_get_time();
+        const double secs = (now - window_start) / 1e6;
+        if (secs <= 0.0) {
+            continue;
+        }
+
+        int rssi = 0, channel = 0;
+        wifi_ap_record_t ap;
+        if (esp_wifi_sta_get_ap_info(&ap) == ESP_OK) {
+            rssi = ap.rssi;
+            channel = ap.primary;
+        }
+
+        ESP_LOGI(TAG,
+                 "telemetry: mic=%.1ffps drop=%u err=%u | up=%.1ffps/%.1fkbps | "
+                 "down=%.1ffps under=%u dec_err=%u enc_err=%u send_err=%u | "
+                 "heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d bat=%d%%/%dmV up=%llds",
+                 (cur_mic - mic_frames) / secs, (unsigned)(cur_mic_drop - mic_dropped),
+                 (unsigned)(cur_mic_err - mic_errors),
+                 (cur_up - up_frames) / secs, (cur_bytes - up_bytes) * 8.0 / 1000.0 / secs,
+                 (cur_down - down_frames) / secs, (unsigned)(cur_under - down_under),
+                 (unsigned)(cur_dec - dec_err), (unsigned)(cur_enc - enc_err), (unsigned)(cur_send - send_err),
+                 (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024),
+                 (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024),
+                 (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024),
+                 rssi, channel, s_volume, s_battery_percent, s_battery_mv,
+                 (long long)(now / 1000000));
+
+        up_frames = cur_up; up_bytes = cur_bytes;
+        down_frames = cur_down; down_under = cur_under;
+        mic_frames = cur_mic; mic_errors = cur_mic_err; mic_dropped = cur_mic_drop;
+        enc_err = cur_enc; send_err = cur_send; dec_err = cur_dec;
+        window_start = now;
+    }
+}
+
 
 /* ---------------------------------------------------------------- button */
 
@@ -462,8 +491,6 @@ static void pmu_init_once(void)
     s_pmu_ready = true;
 }
 /* --------------------------------------------------------------- status ui */
-static int s_battery_percent = -1;
-static int s_battery_mv = 0;
 
 static bool pmu_read(uint8_t reg, uint8_t *buf, size_t len)
 {
@@ -847,16 +874,50 @@ static void ui_task(void *arg)
 }
 /* ------------------------------------------------------------------ network */
 
+static esp_timer_handle_t s_wifi_retry_timer;
+static int s_wifi_retries;
+static uint32_t s_wifi_backoff_ms = 1000;
+
+static void wifi_retry_cb(void *arg)
+{
+    (void)arg;
+    esp_wifi_connect();
+}
+
+/* Reconnects with capped exponential backoff and, more importantly, logs why:
+ * without the reason code a silent drop looks identical to a dead board. */
 static void on_wifi(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
-    if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
+    (void)arg;
+    if (base != WIFI_EVENT) {
+        return;
+    }
+
+    if (id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
-    } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGW(TAG, "wifi disconnected, retrying");
+    } else if (id == WIFI_EVENT_STA_CONNECTED) {
+        const wifi_event_sta_connected_t *c = (const wifi_event_sta_connected_t *)data;
+        s_wifi_retries = 0;
+        s_wifi_backoff_ms = 1000;
+        ESP_LOGI(TAG, "wifi associated: ssid=\"%.32s\" channel=%d",
+                 (const char *)c->ssid, c->channel);
+    } else if (id == WIFI_EVENT_STA_DISCONNECTED) {
+        const wifi_event_sta_disconnected_t *d = (const wifi_event_sta_disconnected_t *)data;
         s_link_up = false;
-        esp_wifi_connect();
+        s_wifi_retries++;
+        const uint32_t backoff = s_wifi_backoff_ms;
+        ESP_LOGW(TAG, "wifi disconnected: reason=%d retry=%d backoff=%ums ssid=\"%.32s\"",
+                 d != NULL ? d->reason : -1, s_wifi_retries, (unsigned)backoff, s_ssid_text);
+        s_wifi_backoff_ms = backoff >= 30000 ? 30000 : backoff * 2;
+        if (s_wifi_retry_timer != NULL) {
+            esp_timer_stop(s_wifi_retry_timer);
+            esp_timer_start_once(s_wifi_retry_timer, (uint64_t)backoff * 1000);
+        } else {
+            esp_wifi_connect();
+        }
     }
 }
+
 
 static EventGroupHandle_t s_ip_events;
 #define IP_BIT BIT0
@@ -876,6 +937,13 @@ static esp_err_t wifi_start(void)
     ESP_RETURN_ON_ERROR(nvs_flash_init(), TAG, "nvs init");
     ESP_RETURN_ON_ERROR(esp_netif_init(), TAG, "netif init");
     ESP_RETURN_ON_ERROR(esp_event_loop_create_default(), TAG, "event loop");
+    if (s_wifi_retry_timer == NULL) {
+        const esp_timer_create_args_t timer_args = {
+            .callback = wifi_retry_cb,
+            .name = "wifi_retry",
+        };
+        ESP_RETURN_ON_ERROR(esp_timer_create(&timer_args, &s_wifi_retry_timer), TAG, "wifi retry timer");
+    }
     esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t init_cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -1082,6 +1150,8 @@ void app_main(void)
     xTaskCreate(button_task, "btn", 3072, NULL, 4, NULL);
     pmu_init_once();
     xTaskCreate(net_task, "net", 6144, NULL, 5, NULL);
+
+    xTaskCreate(telemetry_task, "telemetry", 4096, NULL, 2, NULL);
 
 
     ESP_LOGI(TAG, "bridge up: udp :%d, hold BOOT to talk", SERVER_PORT);
