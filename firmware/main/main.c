@@ -888,6 +888,12 @@ static void refresh_captions(void)
 
 /* Board-side capture switch: the round UI had it on the screen, so a tap on
  * the microphone tile starts and stops the uplink without touching BOOT. */
+static void restore_mic_caption(lv_timer_t *timer)
+{
+    (void)timer;
+    refresh_captions();
+}
+
 static void on_mic(lv_event_t *e)
 {
     (void)e;
@@ -897,6 +903,15 @@ static void on_mic(lv_event_t *e)
     } else if (s_link_up) {
         s_talking = true;
         send_ctrl("ptt_down");
+    } else if (s_cap_mic != NULL) {
+        /* No peer yet: say so instead of looking like a dead button. */
+        refresh_captions();
+        lv_label_set_text(s_cap_mic, "NO LINK");
+        lv_timer_t *timer = lv_timer_create(restore_mic_caption, 1500, NULL);
+        if (timer != NULL) {
+            lv_timer_set_repeat_count(timer, 1);
+        }
+        return;
     }
     refresh_captions();
 }
