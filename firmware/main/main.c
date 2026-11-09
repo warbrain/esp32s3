@@ -672,6 +672,7 @@ static lv_obj_t *s_cap_bat;
 static lv_obj_t *s_cap_mic;
 static lv_obj_t *s_panel;
 static lv_obj_t *s_panel_volume;
+static lv_obj_t *s_mic_tile;
 
 static void volume_apply(int value, bool persist)
 {
@@ -711,7 +712,10 @@ static void glass_style(lv_obj_t *o, uint32_t tint, int radius)
 static lv_obj_t *glyph_label(lv_obj_t *parent, const char *symbol, int size, int y)
 {
     lv_obj_t *label = lv_label_create(parent);
-    lv_obj_set_style_text_font(label, size >= 32 ? &lv_font_montserrat_32 : &lv_font_montserrat_24, 0);
+    const lv_font_t *font = size >= 48 ? &lv_font_montserrat_48
+                         : size >= 32 ? &lv_font_montserrat_32
+                                      : &lv_font_montserrat_24;
+    lv_obj_set_style_text_font(label, font, 0);
     lv_obj_set_style_text_color(label, lv_color_white(), 0);
     lv_label_set_text(label, symbol);
     lv_obj_align(label, LV_ALIGN_CENTER, 0, y);
@@ -870,7 +874,16 @@ static void refresh_captions(void)
 
     set_caption(s_cap_bat, buffer, bat_cache, sizeof(bat_cache));
 
-    set_caption(s_cap_mic, s_talking ? "ON AIR" : "idle", mic_cache, sizeof(mic_cache));
+    set_caption(s_cap_mic, s_talking ? "ON AIR" : "TAP", mic_cache, sizeof(mic_cache));
+
+    /* The centre puck doubles as the state indicator: red while recording. */
+    static bool tinted = false;
+    if (s_mic_tile != NULL && tinted != s_talking) {
+        tinted = s_talking;
+        const uint32_t tint = s_talking ? 0xC0392B : 0x2F6FEB;
+        lv_obj_set_style_bg_color(s_mic_tile, lv_color_hex(tint), 0);
+        lv_obj_set_style_shadow_color(s_mic_tile, lv_color_hex(tint), 0);
+    }
 }
 
 /* Board-side capture switch: the round UI had it on the screen, so a tap on
@@ -905,46 +918,69 @@ static void ui_start(void)
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0x8FA8C4), 0);
     lv_label_set_text(title, "AUDIO BRIDGE");
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 18);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 14);
 
-    static const struct {
+    /* The panel is round: everything has to live inside a 466 px circle, so the
+     * layout is one big glass puck plus satellites on the vertical/horizontal
+     * axes, where the circle is widest. */
+    s_mic_tile = lv_obj_create(screen);
+    lv_obj_set_size(s_mic_tile, 204, 204);
+    glass_style(s_mic_tile, 0x2F6FEB, LV_RADIUS_CIRCLE);
+    lv_obj_set_clickable(s_mic_tile, true);
+    lv_obj_add_event_cb(s_mic_tile, on_mic, LV_EVENT_CLICKED, NULL);
+    lv_obj_set_scrollable(s_mic_tile, false);
+    lv_obj_align(s_mic_tile, LV_ALIGN_CENTER, 0, 6);
+
+    glyph_label(s_mic_tile, LV_SYMBOL_AUDIO, 48, -30);
+
+    lv_obj_t *cap = lv_label_create(s_mic_tile);
+    lv_obj_set_style_text_font(cap, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(cap, lv_color_hex(0xEAF2FF), 0);
+    lv_obj_set_width(cap, 180);
+    lv_obj_set_style_text_align(cap, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_text(cap, "TAP");
+    lv_obj_align(cap, LV_ALIGN_CENTER, 0, 50);
+    s_cap_mic = cap;
+
+    struct Satellite {
         const char *symbol;
         uint32_t tint;
         lv_event_cb_t cb;
         lv_obj_t **caption;
-    } tiles[4] = {
-        { LV_SYMBOL_WIFI, 0x2C6E9B, on_wlan, &s_cap_ssid },
-        { LV_SYMBOL_VOLUME_MAX, 0x6B4E9B, on_sound, &s_cap_vol },
-        { LV_SYMBOL_BATTERY_3, 0x2E7D5B, on_info, &s_cap_bat },
-        { LV_SYMBOL_AUDIO, 0x9B5E2C, on_mic, &s_cap_mic },
+        int x, y;
+    };
+    static const struct Satellite satellites[3] = {
+        { LV_SYMBOL_WIFI, 0x2C6E9B, on_wlan, &s_cap_ssid, 0, -176 },
+        { LV_SYMBOL_VOLUME_MAX, 0x6B4E9B, on_sound, &s_cap_vol, 176, 0 },
+        { LV_SYMBOL_BATTERY_3, 0x2E7D5B, on_info, &s_cap_bat, 0, 176 },
     };
 
-    for (int i = 0; i < 4; i++) {
-        lv_obj_t *tile = lv_obj_create(screen);
-        lv_obj_set_size(tile, 176, 176);
-        glass_style(tile, tiles[i].tint, LV_RADIUS_CIRCLE);
-        lv_obj_set_clickable(tile, true);
-        lv_obj_add_event_cb(tile, tiles[i].cb, LV_EVENT_CLICKED, NULL);
-        lv_obj_set_scrollable(tile, false);
-        const int x = (i % 2 == 0) ? -96 : 96;
-        const int y = (i < 2) ? -86 : 96;
-        lv_obj_align(tile, LV_ALIGN_CENTER, x, y);
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *chip = lv_obj_create(screen);
+        lv_obj_set_size(chip, 100, 100);
+        glass_style(chip, satellites[i].tint, LV_RADIUS_CIRCLE);
+        lv_obj_set_clickable(chip, true);
+        lv_obj_add_event_cb(chip, satellites[i].cb, LV_EVENT_CLICKED, NULL);
+        lv_obj_set_scrollable(chip, false);
+        lv_obj_align(chip, LV_ALIGN_CENTER, satellites[i].x, satellites[i].y);
 
-        glyph_label(tile, tiles[i].symbol, 32, -22);
-        lv_obj_t *cap = lv_label_create(tile);
-        lv_obj_set_style_text_font(cap, &lv_font_montserrat_24, 0);
-        lv_obj_set_style_text_color(cap, lv_color_hex(0xE6EFF9), 0);
-        /* Fixed width + centred text: a growing label leaves stale pixels inside the circle. */
-        lv_obj_set_width(cap, 150);
-        lv_obj_set_style_text_align(cap, LV_TEXT_ALIGN_CENTER, 0);
-        lv_label_set_text(cap, "--");
-        lv_obj_align(cap, LV_ALIGN_CENTER, 0, 42);
-        *tiles[i].caption = cap;
+        glyph_label(chip, satellites[i].symbol, 32, -14);
+
+        lv_obj_t *label = lv_label_create(chip);
+        lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
+        lv_obj_set_style_text_color(label, lv_color_hex(0xE6EFF9), 0);
+        lv_obj_set_width(label, 84);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+        lv_label_set_text(label, "--");
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 24);
+        *satellites[i].caption = label;
     }
 
     refresh_captions();
     bsp_display_unlock();
 }
+
 
 static void ui_task(void *arg)
 {
