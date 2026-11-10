@@ -83,6 +83,7 @@ static bool s_sleeping;
 static int s_last_rssi;
 
 static void update_status_pill(void);
+static void sleep_hide(void);
 static void tick_clock(void);
 static volatile uint32_t s_down_idle;
 static volatile int64_t s_down_last_us;
@@ -911,6 +912,12 @@ static void refresh_captions(void)
         lv_obj_set_style_shadow_color(s_mic_tile, lv_color_hex(tint), 0);
         set_recording_motion(s_talking);
     }
+
+    /* Capture can also start from the PC hotkey; never record behind a dark
+     * screen, the user has to see the ON AIR state. */
+    if (s_talking && s_sleeping) {
+        sleep_hide();
+    }
     update_status_pill();
 }
 
@@ -1283,7 +1290,8 @@ static void ui_start(void)
     lv_obj_set_style_border_width(s_sleep_overlay, 0, 0);
     lv_obj_set_scrollable(s_sleep_overlay, false);
     lv_obj_set_clickable(s_sleep_overlay, true);
-    lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_PRESSED, NULL);
+    lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_RELEASED, NULL);
+    lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_PRESS_LOST, NULL);
     lv_obj_center(s_sleep_overlay);
 
     s_sleep_time_label = lv_label_create(s_sleep_overlay);
@@ -1329,7 +1337,7 @@ static void ui_task(void *arg)
         if (++ticks % 20 == 0) {
             battery_update();
         }
-        if (s_cap_ssid != NULL && bsp_display_lock(50) == ESP_OK) {
+        if (s_cap_ssid != NULL && bsp_display_lock(200) == ESP_OK) {
             refresh_captions();
             if (ticks % 2 == 0) {
                 tick_clock();
