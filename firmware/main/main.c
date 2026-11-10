@@ -539,6 +539,7 @@ static void button_task(void *arg)
                 if (!recording) {
                     recording = true;
                     s_talking = true;
+                    beep_play(s_beep_up, s_beep_up_len);
                     send_ctrl("ptt_down");
                 }
             } else {
@@ -547,6 +548,7 @@ static void button_task(void *arg)
                     if (recording) {
                         recording = false;
                         s_talking = false;
+                        beep_play(s_beep_down, s_beep_down_len);
                         send_ctrl("ptt_up");
                     }
                 } else if (now - last_tap_ms < DOUBLE_MS) {
@@ -1132,6 +1134,7 @@ static void sleep_show(void)
     s_sleeping = true;
     lv_obj_set_hidden(s_sleep_overlay, false);
     lv_obj_move_foreground(s_sleep_overlay);
+    lv_anim_delete(s_sleep_overlay, overlay_opa_cb);
 
     lv_anim_t fade;
     lv_anim_init(&fade);
@@ -1151,6 +1154,7 @@ static void sleep_hide(void)
         return;
     }
     s_sleeping = false;
+    lv_anim_delete(s_sleep_overlay, overlay_opa_cb);
 
     lv_anim_t fade;
     lv_anim_init(&fade);
