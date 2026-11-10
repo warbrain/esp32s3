@@ -87,8 +87,6 @@ static volatile uint32_t s_decode_errors;
 static volatile uint32_t s_render_frames;
 static volatile uint32_t s_render_us;
 static int64_t s_render_started_us;
-static volatile int64_t s_input_us;          /* when the user last pressed */
-static volatile uint32_t s_input_latency_us; /* press -> first finished frame */
 
 /* Sleep screen + panel brightness. */
 static esp_lcd_panel_io_handle_t s_lcd_io;
@@ -467,11 +465,6 @@ static void on_render_ready(lv_event_t *e)
             s_render_frames++;
         }
     }
-    const int64_t pressed = s_input_us;
-    if (pressed > 0) {
-        s_input_us = 0;
-        s_input_latency_us = (uint32_t)(now - pressed);
-    }
 }
 
 static void telemetry_task(void *arg)
@@ -509,7 +502,7 @@ static void telemetry_task(void *arg)
         ESP_LOGI(TAG,
                  "telemetry: mic=%.1ffps drop=%u err=%u | up=%.1ffps/%.1fkbps | "
                  "down=%.1ffps under=%u idle=%u dec_err=%u enc_err=%u send_err=%u | "
-                 "ui=%.1ffps/%.1fms/in=%ums | heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d | "
+                 "ui=%.1ffps/%.1fms | heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d | "
                  "bat=%d%%/%dmV iraw=%dmA vbus=%d gauge=%d pwr=state%d/en%d/set%dmA up=%llds",
                  (cur_mic - mic_frames) / secs, (unsigned)(cur_mic_drop - mic_dropped),
                  (unsigned)(cur_mic_err - mic_errors),
@@ -519,7 +512,6 @@ static void telemetry_task(void *arg)
                  (unsigned)(cur_dec - dec_err), (unsigned)(cur_enc - enc_err), (unsigned)(cur_send - send_err),
                  (cur_frames - frames_prev) / secs,
                  (cur_frames == frames_prev) ? 0.0 : (double)(cur_us - us_prev) / 1000.0 / (double)(cur_frames - frames_prev),
-                 (unsigned)s_input_latency_us,
                  (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024),
                  (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024),
                  (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024),
@@ -1059,7 +1051,6 @@ static void glow_opa_cb(void *var, int32_t value)
 
 static void puck_pressed(lv_event_t *e)
 {
-    s_input_us = esp_timer_get_time();
     lv_obj_set_style_transform_scale((lv_obj_t *)lv_event_get_target(e), 243, 0);
 }
 
@@ -1207,12 +1198,6 @@ static void sleep_hide(void)
     lv_obj_set_clickable(s_sleep_overlay, false);
     lv_obj_set_hidden(s_sleep_overlay, true);
     backlight_ramp();
-}
-
-static void sleep_touched(lv_event_t *e)
-{
-    (void)e;
-    sleep_hide();
 }
 
 /* ------------------------------------------------------------------ status */
@@ -1437,8 +1422,6 @@ static void ui_start(void)
     lv_obj_set_style_border_width(s_sleep_overlay, 0, 0);
     lv_obj_set_scrollable(s_sleep_overlay, false);
     lv_obj_set_clickable(s_sleep_overlay, false);
-    lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_RELEASED, NULL);
-    lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_PRESS_LOST, NULL);
     lv_obj_center(s_sleep_overlay);
 
     s_sleep_time_label = lv_label_create(s_sleep_overlay);
@@ -1488,8 +1471,14 @@ static void ui_task(void *arg)
             refresh_captions();
             if (ticks % 2 == 0) {
                 tick_clock();
-                if (!s_sleeping && !s_talking &&
-                    lv_display_get_inactive_time(NULL) > 30000) {
+                const uint32_t idle_ms = lv_display_get_inactive_time(NULL);
+                if (s_sleeping) {
+                    /* Any touch wakes the panel; the same tap still reaches the
+                     * widget underneath because the overlay ignores input. */
+                    if (idle_ms < 400) {
+                        sleep_hide();
+                    }
+                } else if (!s_talking && idle_ms > 30000) {
                     sleep_show();
                 }
             }
