@@ -80,7 +80,6 @@ static lv_obj_t *s_centre_time_label;
 static lv_obj_t *s_status_pill;
 static lv_obj_t *s_status_label;
 static bool s_sleeping;
-static bool s_time_valid;
 static int s_last_rssi;
 
 static void update_status_pill(void);
@@ -383,7 +382,6 @@ static void battery_update(void);
 
 /* One line every five seconds: a support call should be answerable from a
  * serial capture alone, without reproducing the problem. */
-static void battery_update(void);
 
 static void telemetry_task(void *arg)
 {
@@ -689,7 +687,6 @@ static lv_display_t *display_start(void)
 static lv_obj_t *s_cap_ssid;
 static lv_obj_t *s_cap_vol;
 static lv_obj_t *s_cap_bat;
-static lv_obj_t *s_cap_mic;
 static lv_obj_t *s_mic_tile;
 static lv_obj_t *s_mic_glow;
 static lv_obj_t *s_mic_ring;
@@ -733,19 +730,6 @@ static void glass_style(lv_obj_t *o, uint32_t tint, int radius)
     lv_obj_set_style_shadow_opa(o, LV_OPA_40, 0);
     lv_obj_set_style_shadow_offset_y(o, 10, 0);
     lv_obj_set_scrollable(o, false);
-}
-
-static lv_obj_t *glyph_label(lv_obj_t *parent, const char *symbol, int size, int y)
-{
-    lv_obj_t *label = lv_label_create(parent);
-    const lv_font_t *font = size >= 48 ? &lv_font_montserrat_48
-                         : size >= 32 ? &lv_font_montserrat_32
-                                      : &lv_font_montserrat_24;
-    lv_obj_set_style_text_font(label, font, 0);
-    lv_obj_set_style_text_color(label, lv_color_white(), 0);
-    lv_label_set_text(label, symbol);
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, y);
-    return label;
 }
 
 /* Deliberately asynchronous: panels are also closed from a child button's
@@ -888,7 +872,7 @@ static void set_caption(lv_obj_t *label, const char *text, char *cache, size_t c
  * only changed values are pushed so the panel is not redrawn every tick. */
 static void refresh_captions(void)
 {
-    static char ssid_cache[40], vol_cache[8], bat_cache[8], mic_cache[10];
+    static char ssid_cache[40], vol_cache[8], bat_cache[8];
     char buffer[40];
 
     set_caption(s_cap_ssid, s_ssid_text, ssid_cache, sizeof(ssid_cache));
@@ -900,7 +884,6 @@ static void refresh_captions(void)
 
     set_caption(s_cap_bat, buffer, bat_cache, sizeof(bat_cache));
 
-    set_caption(s_cap_mic, s_talking ? "ON AIR" : "TAP", mic_cache, sizeof(mic_cache));
 
     /* The centre puck doubles as the state indicator: red while recording. */
     static bool tinted = false;
@@ -915,11 +898,6 @@ static void refresh_captions(void)
 }
 
 
-static void restore_mic_caption(lv_timer_t *timer)
-{
-    (void)timer;
-    refresh_captions();
-}
 
 /* Board-side capture switch: the round UI had it on the screen, so a tap on
  * the microphone puck starts and stops the uplink without touching BOOT. */
@@ -932,14 +910,9 @@ static void on_mic(lv_event_t *e)
     } else if (s_link_up) {
         s_talking = true;
         send_ctrl("ptt_down");
-    } else if (s_cap_mic != NULL) {
-        /* No peer yet: say so instead of looking like a dead button. */
+    } else {
+        /* No peer: the status pill already reads NO LINK, nothing else to do. */
         refresh_captions();
-        lv_label_set_text(s_cap_mic, "NO LINK");
-        lv_timer_t *timer = lv_timer_create(restore_mic_caption, 1500, NULL);
-        if (timer != NULL) {
-            lv_timer_set_repeat_count(timer, 1);
-        }
         return;
     }
     refresh_captions();
@@ -1014,18 +987,36 @@ static void set_recording_motion(bool recording)
 
 /* ------------------------------------------------------------------ clock */
 
-static void clock_text(char *out, size_t size, const char *format)
+/* The panel only ships Latin fonts, so the date stays ASCII. */
+static bool clock_now(struct tm *local)
 {
     const time_t now = time(NULL);
-    if (now < 1700000000) { /* no SNTP yet */
-        s_time_valid = false;
+    if (now < 1700000000) { /* SNTP has not answered yet */
+        return false;
+    }
+    localtime_r(&now, local);
+    return true;
+}
+
+static void clock_time_text(char *out, size_t size)
+{
+    struct tm local;
+    if (!clock_now(&local)) {
         snprintf(out, size, "--:--");
         return;
     }
-    s_time_valid = true;
+    strftime(out, size, "%H:%M", &local);
+}
+
+static void clock_date_text(char *out, size_t size)
+{
+    static const char *names[7] = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
     struct tm local;
-    localtime_r(&now, &local);
-    strftime(out, size, format, &local);
+    if (!clock_now(&local)) {
+        snprintf(out, size, "--");
+        return;
+    }
+    snprintf(out, size, "%s  %d", names[local.tm_wday % 7], local.tm_mday);
 }
 
 /* ------------------------------------------------------------------ sleep */
@@ -1043,7 +1034,7 @@ static void sleep_show(void)
         return;
     }
     s_sleeping = true;
-    lv_obj_remove_flag(s_sleep_overlay, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_hidden(s_sleep_overlay, false);
     lv_obj_move_foreground(s_sleep_overlay);
     set_backlight(0x28);
 }
@@ -1054,7 +1045,7 @@ static void sleep_hide(void)
         return;
     }
     s_sleeping = false;
-    lv_obj_add_flag(s_sleep_overlay, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_hidden(s_sleep_overlay, true);
     set_backlight(0xFF);
 }
 
@@ -1089,7 +1080,7 @@ static void update_status_pill(void)
 static void tick_clock(void)
 {
     char buffer[48];
-    clock_text(buffer, sizeof(buffer), "%H:%M");
+    clock_time_text(buffer, sizeof(buffer));
     if (s_centre_time_label != NULL) {
         lv_label_set_text(s_centre_time_label, buffer);
     }
@@ -1097,7 +1088,7 @@ static void tick_clock(void)
         lv_label_set_text(s_sleep_time_label, buffer);
     }
     if (s_sleep_date_label != NULL) {
-        clock_text(buffer, sizeof(buffer), "%mæœˆ%dæ—¥  %a");
+        clock_date_text(buffer, sizeof(buffer));
         lv_label_set_text(s_sleep_date_label, buffer);
     }
     if (s_sleep_info_label != NULL) {
@@ -1302,7 +1293,7 @@ static void ui_start(void)
     lv_label_set_text(wake, "TAP TO WAKE");
     lv_obj_align(wake, LV_ALIGN_CENTER, 0, 122);
 
-    lv_obj_add_flag(s_sleep_overlay, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_hidden(s_sleep_overlay, true);
 
     refresh_captions();
     update_status_pill();
