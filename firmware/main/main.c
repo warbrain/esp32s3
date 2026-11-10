@@ -31,6 +31,8 @@
 #include "esp_check.h"
 #include "esp_system.h"
 #include "esp_timer.h"
+#include "esp_sntp.h"
+#include <time.h>
 #include "esp_heap_caps.h"
 #include "esp_pthread.h"
 #include <pthread.h>
@@ -67,6 +69,22 @@ static volatile uint32_t s_mic_dropped;
 static volatile uint32_t s_encode_errors;
 static volatile uint32_t s_send_errors;
 static volatile uint32_t s_decode_errors;
+
+/* Sleep screen + panel brightness. */
+static esp_lcd_panel_io_handle_t s_lcd_io;
+static lv_obj_t *s_sleep_overlay;
+static lv_obj_t *s_sleep_time_label;
+static lv_obj_t *s_sleep_date_label;
+static lv_obj_t *s_sleep_info_label;
+static lv_obj_t *s_centre_time_label;
+static lv_obj_t *s_status_pill;
+static lv_obj_t *s_status_label;
+static bool s_sleeping;
+static bool s_time_valid;
+static int s_last_rssi;
+
+static void update_status_pill(void);
+static void tick_clock(void);
 static volatile uint32_t s_down_idle;
 static volatile int64_t s_down_last_us;
 
@@ -394,6 +412,7 @@ static void telemetry_task(void *arg)
         if (esp_wifi_sta_get_ap_info(&ap) == ESP_OK) {
             rssi = ap.rssi;
             channel = ap.primary;
+            s_last_rssi = rssi;
         }
 
         ESP_LOGI(TAG,
@@ -624,6 +643,7 @@ static lv_display_t *display_start(void)
     if (bsp_display_new(&disp_config, &panel, &io) != ESP_OK) {
         return NULL;
     }
+    s_lcd_io = io;
     /* bsp_display_start() used to do this; we register the panel ourselves. */
     const uint8_t brightness = 0xFF;
     esp_lcd_panel_io_tx_param(io, 0x51, &brightness, 1);
@@ -891,6 +911,7 @@ static void refresh_captions(void)
         lv_obj_set_style_shadow_color(s_mic_tile, lv_color_hex(tint), 0);
         set_recording_motion(s_talking);
     }
+    update_status_pill();
 }
 
 
@@ -991,6 +1012,103 @@ static void set_recording_motion(bool recording)
     }
 }
 
+/* ------------------------------------------------------------------ clock */
+
+static void clock_text(char *out, size_t size, const char *format)
+{
+    const time_t now = time(NULL);
+    if (now < 1700000000) { /* no SNTP yet */
+        s_time_valid = false;
+        snprintf(out, size, "--:--");
+        return;
+    }
+    s_time_valid = true;
+    struct tm local;
+    localtime_r(&now, &local);
+    strftime(out, size, format, &local);
+}
+
+/* ------------------------------------------------------------------ sleep */
+
+static void set_backlight(uint8_t value)
+{
+    if (s_lcd_io != NULL) {
+        esp_lcd_panel_io_tx_param(s_lcd_io, 0x51, &value, 1);
+    }
+}
+
+static void sleep_show(void)
+{
+    if (s_sleeping || s_sleep_overlay == NULL) {
+        return;
+    }
+    s_sleeping = true;
+    lv_obj_remove_flag(s_sleep_overlay, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(s_sleep_overlay);
+    set_backlight(0x28);
+}
+
+static void sleep_hide(void)
+{
+    if (!s_sleeping || s_sleep_overlay == NULL) {
+        return;
+    }
+    s_sleeping = false;
+    lv_obj_add_flag(s_sleep_overlay, LV_OBJ_FLAG_HIDDEN);
+    set_backlight(0xFF);
+}
+
+static void sleep_touched(lv_event_t *e)
+{
+    (void)e;
+    sleep_hide();
+}
+
+/* ------------------------------------------------------------------ status */
+
+static void update_status_pill(void)
+{
+    if (s_status_label == NULL || s_status_pill == NULL) {
+        return;
+    }
+    if (s_talking) {
+        lv_label_set_text(s_status_label, "ON AIR");
+        lv_obj_set_style_text_color(s_status_label, lv_color_hex(0xFFC4BC), 0);
+        lv_obj_set_style_bg_opa(s_status_pill, LV_OPA_20, 0);
+        lv_obj_set_style_bg_color(s_status_pill, lv_color_hex(0xFF9484), 0);
+        lv_obj_set_style_border_color(s_status_pill, lv_color_hex(0xFFAA9E), 0);
+    } else {
+        lv_label_set_text(s_status_label, s_link_up ? "READY" : "NO LINK");
+        lv_obj_set_style_text_color(s_status_label, lv_color_hex(0xC9D8EC), 0);
+        lv_obj_set_style_bg_opa(s_status_pill, LV_OPA_10, 0);
+        lv_obj_set_style_bg_color(s_status_pill, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_style_border_color(s_status_pill, lv_color_hex(0xFFFFFF), 0);
+    }
+}
+
+static void tick_clock(void)
+{
+    char buffer[48];
+    clock_text(buffer, sizeof(buffer), "%H:%M");
+    if (s_centre_time_label != NULL) {
+        lv_label_set_text(s_centre_time_label, buffer);
+    }
+    if (s_sleep_time_label != NULL) {
+        lv_label_set_text(s_sleep_time_label, buffer);
+    }
+    if (s_sleep_date_label != NULL) {
+        clock_text(buffer, sizeof(buffer), "%mæœˆ%dæ—¥  %a");
+        lv_label_set_text(s_sleep_date_label, buffer);
+    }
+    if (s_sleep_info_label != NULL) {
+        snprintf(buffer, sizeof(buffer), "WiFi %d dBm    BAT %d%%",
+                 s_last_rssi, s_battery_percent < 0 ? 0 : s_battery_percent);
+        lv_label_set_text(s_sleep_info_label, buffer);
+    }
+}
+
+/* --------------------------------------------------------------------- ui */
+
 static void ui_start(void)
 {
     if (display_start() == NULL) {
@@ -999,46 +1117,97 @@ static void ui_start(void)
     }
     bsp_display_lock(0);
     lv_obj_t *screen = lv_screen_active();
-    lv_obj_set_style_bg_color(screen, lv_color_hex(0x070B14), 0);
+    lv_obj_set_style_bg_color(screen, lv_color_hex(0x05070D), 0);
     lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_VER, 0);
     lv_obj_set_style_bg_grad_color(screen, lv_color_hex(0x0E1B33), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
 
-    /* Ambient depth: two faint discs, the panel is round so they read as light
-     * falling on glass rather than as decoration. */
-    lv_obj_t *ambient_top = lv_obj_create(screen);
-    lv_obj_set_size(ambient_top, 300, 300);
-    lv_obj_set_style_radius(ambient_top, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(ambient_top, lv_color_hex(0x2F6FEB), 0);
-    lv_obj_set_style_bg_opa(ambient_top, LV_OPA_10, 0);
-    lv_obj_set_style_border_width(ambient_top, 0, 0);
-    lv_obj_set_scrollable(ambient_top, false);
-    lv_obj_set_clickable(ambient_top, false);
-    lv_obj_align(ambient_top, LV_ALIGN_TOP_MID, 0, -150);
+    /* Ambient light: three faint discs give the glass something to sit on. */
+    static const struct { int x, y, r; uint32_t color; lv_opa_t opa; } blooms[] = {
+        { -140, -170, 200, 0x2F6FEB, LV_OPA_10 },
+        { 210, 120, 210, 0x7046A8, LV_OPA_10 },
+        { 150, -180, 140, 0x2C7AA8, LV_OPA_10 },
+    };
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *bloom = lv_obj_create(screen);
+        lv_obj_set_size(bloom, blooms[i].r, blooms[i].r);
+        lv_obj_set_style_radius(bloom, LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_style_bg_color(bloom, lv_color_hex(blooms[i].color), 0);
+        lv_obj_set_style_bg_opa(bloom, blooms[i].opa, 0);
+        lv_obj_set_style_border_width(bloom, 0, 0);
+        lv_obj_set_style_shadow_width(bloom, 60, 0);
+        lv_obj_set_style_shadow_color(bloom, lv_color_hex(blooms[i].color), 0);
+        lv_obj_set_style_shadow_opa(bloom, LV_OPA_10, 0);
+        lv_obj_set_scrollable(bloom, false);
+        lv_obj_set_clickable(bloom, false);
+        lv_obj_align(bloom, LV_ALIGN_CENTER, blooms[i].x / 2, blooms[i].y / 2);
+    }
 
-    lv_obj_t *title = lv_label_create(screen);
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(title, lv_color_hex(0x8FA8C4), 0);
-    lv_label_set_text(title, "AUDIO BRIDGE");
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 16);
+    /* Honeycomb: six chips on a ring, the central puck is the capture switch. */
+    struct Satellite {
+        const char *symbol;
+        uint32_t tint;
+        lv_event_cb_t cb;
+        lv_obj_t **caption;
+        int x, y;
+    };
+    static const struct Satellite satellites[6] = {
+        { LV_SYMBOL_WIFI, 0x2C7AA8, on_wlan, &s_cap_ssid, -112, -112 },
+        { LV_SYMBOL_VOLUME_MAX, 0x7046A8, on_sound, &s_cap_vol, 112, -112 },
+        { LV_SYMBOL_BATTERY_3, 0x2E8C64, on_info, &s_cap_bat, 160, 0 },
+        { LV_SYMBOL_SETTINGS, 0x4E5A6C, on_info, NULL, 112, 112 },
+        { LV_SYMBOL_LIST, 0x4E5A6C, on_info, NULL, -112, 112 },
+        { LV_SYMBOL_AUDIO, 0x2F6FEB, on_mic, NULL, -160, 0 },
+    };
 
-    /* Glow + progress ring sit behind the puck. */
+    for (int i = 0; i < 6; i++) {
+        lv_obj_t *chip = lv_obj_create(screen);
+        lv_obj_set_size(chip, 76, 76);
+        glass_style(chip, satellites[i].tint, LV_RADIUS_CIRCLE);
+        lv_obj_set_clickable(chip, true);
+        lv_obj_add_event_cb(chip, satellites[i].cb, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(chip, puck_pressed, LV_EVENT_PRESSED, NULL);
+        lv_obj_add_event_cb(chip, puck_released, LV_EVENT_RELEASED, NULL);
+        lv_obj_add_event_cb(chip, puck_released, LV_EVENT_PRESS_LOST, NULL);
+        lv_obj_set_scrollable(chip, false);
+        lv_obj_align(chip, LV_ALIGN_CENTER, satellites[i].x, satellites[i].y);
+
+        lv_obj_t *icon = lv_label_create(chip);
+        lv_obj_set_style_text_font(icon, &lv_font_montserrat_24, 0);
+        lv_obj_set_style_text_color(icon, lv_color_white(), 0);
+        lv_label_set_text(icon, satellites[i].symbol);
+        lv_obj_align(icon, LV_ALIGN_CENTER, 0, -8);
+
+        if (satellites[i].caption != NULL) {
+            lv_obj_t *label = lv_label_create(chip);
+            lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
+            lv_obj_set_style_text_color(label, lv_color_hex(0xC9D8EC), 0);
+            lv_obj_set_width(label, 70);
+            lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+            lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+            lv_label_set_text(label, "--");
+            lv_obj_align(label, LV_ALIGN_CENTER, 0, 20);
+            *satellites[i].caption = label;
+        }
+    }
+
+    /* Glow + recording ring + glass puck. */
     s_mic_glow = lv_obj_create(screen);
-    lv_obj_set_size(s_mic_glow, 250, 250);
+    lv_obj_set_size(s_mic_glow, 208, 208);
     lv_obj_set_style_radius(s_mic_glow, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(s_mic_glow, lv_color_hex(0x2F6FEB), 0);
     lv_obj_set_style_bg_opa(s_mic_glow, LV_OPA_20, 0);
     lv_obj_set_style_border_width(s_mic_glow, 0, 0);
-    lv_obj_set_style_shadow_width(s_mic_glow, 70, 0);
+    lv_obj_set_style_shadow_width(s_mic_glow, 60, 0);
     lv_obj_set_style_shadow_color(s_mic_glow, lv_color_hex(0x2F6FEB), 0);
     lv_obj_set_style_shadow_opa(s_mic_glow, LV_OPA_30, 0);
     lv_obj_set_scrollable(s_mic_glow, false);
     lv_obj_set_clickable(s_mic_glow, false);
-    lv_obj_align(s_mic_glow, LV_ALIGN_CENTER, 0, 6);
+    lv_obj_align(s_mic_glow, LV_ALIGN_CENTER, 0, 0);
 
     s_mic_ring = lv_arc_create(screen);
-    lv_obj_set_size(s_mic_ring, 238, 238);
-    lv_obj_align(s_mic_ring, LV_ALIGN_CENTER, 0, 6);
+    lv_obj_set_size(s_mic_ring, 190, 190);
+    lv_obj_align(s_mic_ring, LV_ALIGN_CENTER, 0, 0);
     lv_arc_set_range(s_mic_ring, 0, 100);
     lv_arc_set_value(s_mic_ring, 100);
     lv_arc_set_bg_angles(s_mic_ring, 0, 360);
@@ -1055,9 +1224,8 @@ static void ui_start(void)
     lv_obj_remove_style(s_mic_ring, NULL, LV_PART_KNOB);
     lv_obj_set_clickable(s_mic_ring, false);
 
-    /* Centre puck: glass, inner top highlight, press feedback. */
     s_mic_tile = lv_obj_create(screen);
-    lv_obj_set_size(s_mic_tile, 200, 200);
+    lv_obj_set_size(s_mic_tile, 176, 176);
     glass_style(s_mic_tile, 0x2F6FEB, LV_RADIUS_CIRCLE);
     lv_obj_set_clickable(s_mic_tile, true);
     lv_obj_add_event_cb(s_mic_tile, on_mic, LV_EVENT_CLICKED, NULL);
@@ -1065,73 +1233,83 @@ static void ui_start(void)
     lv_obj_add_event_cb(s_mic_tile, puck_released, LV_EVENT_RELEASED, NULL);
     lv_obj_add_event_cb(s_mic_tile, puck_released, LV_EVENT_PRESS_LOST, NULL);
     lv_obj_set_scrollable(s_mic_tile, false);
-    lv_obj_align(s_mic_tile, LV_ALIGN_CENTER, 0, 6);
+    lv_obj_align(s_mic_tile, LV_ALIGN_CENTER, 0, 0);
 
-    lv_obj_t *sheen = lv_obj_create(s_mic_tile);
-    lv_obj_set_size(sheen, 168, 84);
-    lv_obj_set_style_radius(sheen, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(sheen, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_set_style_bg_opa(sheen, LV_OPA_10, 0);
-    lv_obj_set_style_border_width(sheen, 0, 0);
-    lv_obj_set_scrollable(sheen, false);
-    lv_obj_set_clickable(sheen, false);
-    lv_obj_align(sheen, LV_ALIGN_TOP_MID, 0, -34);
+    s_centre_time_label = lv_label_create(s_mic_tile);
+    lv_obj_set_style_text_font(s_centre_time_label, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(s_centre_time_label, lv_color_hex(0xF5FAFF), 0);
+    lv_label_set_text(s_centre_time_label, "--:--");
+    lv_obj_align(s_centre_time_label, LV_ALIGN_CENTER, 0, -26);
 
-    glyph_label(s_mic_tile, LV_SYMBOL_AUDIO, 48, -26);
+    s_status_pill = lv_obj_create(s_mic_tile);
+    lv_obj_set_size(s_status_pill, 108, 28);
+    lv_obj_set_style_radius(s_status_pill, 14, 0);
+    lv_obj_set_style_bg_color(s_status_pill, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_bg_opa(s_status_pill, LV_OPA_10, 0);
+    lv_obj_set_style_border_width(s_status_pill, 1, 0);
+    lv_obj_set_style_border_color(s_status_pill, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_border_opa(s_status_pill, LV_OPA_20, 0);
+    lv_obj_set_style_shadow_width(s_status_pill, 0, 0);
+    lv_obj_set_scrollable(s_status_pill, false);
+    lv_obj_set_clickable(s_status_pill, false);
+    lv_obj_align(s_status_pill, LV_ALIGN_CENTER, 0, 30);
 
-    lv_obj_t *cap = lv_label_create(s_mic_tile);
-    lv_obj_set_style_text_font(cap, &lv_font_montserrat_24, 0);
-    lv_obj_set_style_text_color(cap, lv_color_hex(0xEAF2FF), 0);
-    lv_obj_set_width(cap, 180);
-    lv_obj_set_style_text_align(cap, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_text(cap, "TAP");
-    lv_obj_align(cap, LV_ALIGN_CENTER, 0, 48);
-    s_cap_mic = cap;
+    s_status_label = lv_label_create(s_status_pill);
+    lv_obj_set_style_text_font(s_status_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(s_status_label, lv_color_hex(0xC9D8EC), 0);
+    lv_label_set_text(s_status_label, "READY");
+    lv_obj_center(s_status_label);
 
-    struct Satellite {
-        const char *symbol;
-        uint32_t tint;
-        lv_event_cb_t cb;
-        lv_obj_t **caption;
-        int x, y;
-    };
-    static const struct Satellite satellites[4] = {
-        { LV_SYMBOL_WIFI, 0x2C6E9B, on_wlan, &s_cap_ssid, 0, -176 },
-        { LV_SYMBOL_VOLUME_MAX, 0x6B4E9B, on_sound, &s_cap_vol, 176, 0 },
-        { LV_SYMBOL_BATTERY_3, 0x2E7D5B, on_info, &s_cap_bat, 0, 176 },
-        { LV_SYMBOL_SETTINGS, 0x4A5568, on_info, NULL, -176, 0 },
-    };
+    lv_obj_t *hint = lv_label_create(s_mic_tile);
+    lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(hint, lv_color_hex(0xB9CCE4), 0);
+    lv_label_set_text(hint, "TAP TO TALK");
+    lv_obj_align(hint, LV_ALIGN_CENTER, 0, 60);
 
-    for (int i = 0; i < 4; i++) {
-        lv_obj_t *chip = lv_obj_create(screen);
-        lv_obj_set_size(chip, 96, 96);
-        glass_style(chip, satellites[i].tint, LV_RADIUS_CIRCLE);
-        lv_obj_set_clickable(chip, true);
-        lv_obj_add_event_cb(chip, satellites[i].cb, LV_EVENT_CLICKED, NULL);
-        lv_obj_add_event_cb(chip, puck_pressed, LV_EVENT_PRESSED, NULL);
-        lv_obj_add_event_cb(chip, puck_released, LV_EVENT_RELEASED, NULL);
-        lv_obj_add_event_cb(chip, puck_released, LV_EVENT_PRESS_LOST, NULL);
-        lv_obj_set_scrollable(chip, false);
-        lv_obj_align(chip, LV_ALIGN_CENTER, satellites[i].x, satellites[i].y);
+    /* Sleep overlay: opaque, covers everything, shown by the idle timer. */
+    s_sleep_overlay = lv_obj_create(screen);
+    lv_obj_set_size(s_sleep_overlay, BSP_LCD_H_RES, BSP_LCD_V_RES);
+    lv_obj_set_style_radius(s_sleep_overlay, 0, 0);
+    lv_obj_set_style_bg_color(s_sleep_overlay, lv_color_hex(0x03050A), 0);
+    lv_obj_set_style_bg_opa(s_sleep_overlay, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(s_sleep_overlay, 0, 0);
+    lv_obj_set_scrollable(s_sleep_overlay, false);
+    lv_obj_set_clickable(s_sleep_overlay, true);
+    lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_PRESSED, NULL);
+    lv_obj_center(s_sleep_overlay);
 
-        glyph_label(chip, satellites[i].symbol, 32, -12);
+    s_sleep_time_label = lv_label_create(s_sleep_overlay);
+    lv_obj_set_style_text_font(s_sleep_time_label, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(s_sleep_time_label, lv_color_hex(0xE8F0FC), 0);
+    lv_label_set_text(s_sleep_time_label, "--:--");
+    lv_obj_align(s_sleep_time_label, LV_ALIGN_CENTER, 0, -60);
 
-        if (satellites[i].caption != NULL) {
-            lv_obj_t *label = lv_label_create(chip);
-            lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
-            lv_obj_set_style_text_color(label, lv_color_hex(0xC9D8EC), 0);
-            lv_obj_set_width(label, 84);
-            lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-            lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
-            lv_label_set_text(label, "--");
-            lv_obj_align(label, LV_ALIGN_CENTER, 0, 26);
-            *satellites[i].caption = label;
-        }
-    }
+    s_sleep_date_label = lv_label_create(s_sleep_overlay);
+    lv_obj_set_style_text_font(s_sleep_date_label, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(s_sleep_date_label, lv_color_hex(0x9FB3CC), 0);
+    lv_label_set_text(s_sleep_date_label, "");
+    lv_obj_align(s_sleep_date_label, LV_ALIGN_CENTER, 0, 4);
+
+    s_sleep_info_label = lv_label_create(s_sleep_overlay);
+    lv_obj_set_style_text_font(s_sleep_info_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(s_sleep_info_label, lv_color_hex(0x8FA8C4), 0);
+    lv_label_set_text(s_sleep_info_label, "");
+    lv_obj_align(s_sleep_info_label, LV_ALIGN_CENTER, 0, 62);
+
+    lv_obj_t *wake = lv_label_create(s_sleep_overlay);
+    lv_obj_set_style_text_font(wake, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(wake, lv_color_hex(0x6E819B), 0);
+    lv_label_set_text(wake, "TAP TO WAKE");
+    lv_obj_align(wake, LV_ALIGN_CENTER, 0, 122);
+
+    lv_obj_add_flag(s_sleep_overlay, LV_OBJ_FLAG_HIDDEN);
 
     refresh_captions();
+    update_status_pill();
+    tick_clock();
     bsp_display_unlock();
 }
+
 
 
 static void ui_task(void *arg)
@@ -1145,6 +1323,13 @@ static void ui_task(void *arg)
         }
         if (s_cap_ssid != NULL && bsp_display_lock(50) == ESP_OK) {
             refresh_captions();
+            if (ticks % 2 == 0) {
+                tick_clock();
+                if (!s_sleeping && !s_talking &&
+                    lv_display_get_inactive_time(NULL) > 30000) {
+                    sleep_show();
+                }
+            }
             bsp_display_unlock();
         }
         vTaskDelay(pdMS_TO_TICKS(500));
@@ -1207,6 +1392,15 @@ static void on_ip(void *arg, esp_event_base_t base, int32_t id, void *data)
         ESP_LOGI(TAG, "got ip " IPSTR, IP2STR(&e->ip_info.ip));
         snprintf(s_ip_text, sizeof(s_ip_text), IPSTR, IP2STR(&e->ip_info.ip));
         xEventGroupSetBits(s_ip_events, IP_BIT);
+
+        /* The panel has no backed RTC: sync once so the clock face is real. */
+        if (!esp_sntp_enabled()) {
+            esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
+            esp_sntp_setservername(0, "ntp.aliyun.com");
+            esp_sntp_setservername(1, "pool.ntp.org");
+            esp_sntp_init();
+            ESP_LOGI(TAG, "sntp started");
+        }
     }
 }
 
@@ -1400,6 +1594,8 @@ static void start_opus_thread(pthread_t *th, void *(*fn)(void *), const char *na
 
 void app_main(void)
 {
+    setenv("TZ", "CST-8", 1);
+    tzset();
     s_tx_lock = xSemaphoreCreateMutex();
     s_opus_lock = xSemaphoreCreateMutex();
     /* NOSPLIT rings keep one frame per item, so the wire format can never be
