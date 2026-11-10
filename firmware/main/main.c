@@ -91,6 +91,9 @@ static volatile int64_t s_down_last_us;
 static int s_battery_percent = -1;
 static int s_battery_mv;
 static int s_battery_current_ma;
+static int s_charge_state;        /* 0 standby, 1 charging, 2 discharging */
+static int s_charge_enabled;      /* 0x18 bit1 */
+static int s_charge_current_set;  /* 0x62 raw, ~25 mA per step */
 static bool s_battery_present;
 static bool s_battery_vbus;
 static bool s_battery_from_gauge;
@@ -417,7 +420,7 @@ static void telemetry_task(void *arg)
                  "telemetry: mic=%.1ffps drop=%u err=%u | up=%.1ffps/%.1fkbps | "
                  "down=%.1ffps under=%u idle=%u dec_err=%u enc_err=%u send_err=%u | "
                  "heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d | "
-                 "bat=%d%%/%dmV chg=%dmA vbus=%d gauge=%d up=%llds",
+                 "bat=%d%%/%dmV iraw=%dmA vbus=%d gauge=%d pwr=state%d/en%d/set%dmA up=%llds",
                  (cur_mic - mic_frames) / secs, (unsigned)(cur_mic_drop - mic_dropped),
                  (unsigned)(cur_mic_err - mic_errors),
                  (cur_up - up_frames) / secs, (cur_bytes - up_bytes) * 8.0 / 1000.0 / secs,
@@ -429,6 +432,7 @@ static void telemetry_task(void *arg)
                  (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024),
                  rssi, channel, s_volume, s_battery_percent, s_battery_mv,
                  s_battery_current_ma, s_battery_vbus ? 1 : 0, s_battery_from_gauge ? 1 : 0,
+                 s_charge_state, s_charge_enabled, s_charge_current_set * 25,
                  (long long)(now / 1000000));
 
         up_frames = cur_up; up_bytes = cur_bytes;
@@ -605,6 +609,19 @@ static void battery_update(void)
     s_battery_current_ma = 0;
     if (pmu_read(AXP_CHG_CURR_H, raw, 2)) {
         s_battery_current_ma = (((raw[0] & 0x1F) << 8) | raw[1]) * 2;
+    }
+
+    /* Charger state: AXP2101 STATUS2[7:5] and the cell-charge enable bit. */
+    uint8_t status2 = 0, gauge_ctrl = 0, icc = 0;
+    s_charge_state = -1;
+    if (pmu_read(0x01, &status2, 1)) {
+        s_charge_state = (status2 >> 5) & 0x07;
+    }
+    if (pmu_read(0x18, &gauge_ctrl, 1)) {
+        s_charge_enabled = (gauge_ctrl >> 1) & 0x01;
+    }
+    if (pmu_read(0x62, &icc, 1)) {
+        s_charge_current_set = icc & 0x1F;
     }
 
     s_battery_percent = -1;
