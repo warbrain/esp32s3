@@ -83,6 +83,13 @@ static volatile uint32_t s_encode_errors;
 static volatile uint32_t s_send_errors;
 static volatile uint32_t s_decode_errors;
 
+/* Render timing: LVGL sends these events around every refresh cycle. */
+static volatile uint32_t s_render_frames;
+static volatile uint32_t s_render_us;
+static int64_t s_render_started_us;
+static volatile int64_t s_input_us;          /* when the user last pressed */
+static volatile uint32_t s_input_latency_us; /* press -> first finished frame */
+
 /* Sleep screen + panel brightness. */
 static esp_lcd_panel_io_handle_t s_lcd_io;
 static lv_obj_t *s_sleep_overlay;
@@ -443,12 +450,37 @@ static void battery_update(void);
 /* One line every five seconds: a support call should be answerable from a
  * serial capture alone, without reproducing the problem. */
 
+static void on_render_start(lv_event_t *e)
+{
+    (void)e;
+    s_render_started_us = esp_timer_get_time();
+}
+
+static void on_render_ready(lv_event_t *e)
+{
+    (void)e;
+    const int64_t now = esp_timer_get_time();
+    if (s_render_started_us > 0) {
+        const uint32_t delta = (uint32_t)(now - s_render_started_us);
+        if (delta < 500000) { /* ignore absurd outliers from a preempted cycle */
+            s_render_us += delta;
+            s_render_frames++;
+        }
+    }
+    const int64_t pressed = s_input_us;
+    if (pressed > 0) {
+        s_input_us = 0;
+        s_input_latency_us = (uint32_t)(now - pressed);
+    }
+}
+
 static void telemetry_task(void *arg)
 {
     (void)arg;
     uint32_t up_frames = 0, up_bytes = 0, down_frames = 0, down_under = 0, down_idle = 0;
     uint32_t mic_frames = 0, mic_errors = 0, mic_dropped = 0;
     uint32_t enc_err = 0, send_err = 0, dec_err = 0;
+    uint32_t frames_prev = 0, us_prev = 0;
     int64_t window_start = esp_timer_get_time();
 
     while (1) {
@@ -459,6 +491,7 @@ static void telemetry_task(void *arg)
         const uint32_t cur_down = s_down_frames, cur_under = s_down_underruns, cur_idle = s_down_idle;
         const uint32_t cur_mic = s_mic_frames, cur_mic_err = s_mic_errors, cur_mic_drop = s_mic_dropped;
         const uint32_t cur_enc = s_encode_errors, cur_send = s_send_errors, cur_dec = s_decode_errors;
+        const uint32_t cur_frames = s_render_frames, cur_us = s_render_us;
         const int64_t now = esp_timer_get_time();
         const double secs = (now - window_start) / 1e6;
         if (secs <= 0.0) {
@@ -476,7 +509,7 @@ static void telemetry_task(void *arg)
         ESP_LOGI(TAG,
                  "telemetry: mic=%.1ffps drop=%u err=%u | up=%.1ffps/%.1fkbps | "
                  "down=%.1ffps under=%u idle=%u dec_err=%u enc_err=%u send_err=%u | "
-                 "heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d | "
+                 "ui=%.1ffps/%.1fms/in=%ums | heap=%uK min=%uK psram=%uK | rssi=%d ch=%d vol=%d | "
                  "bat=%d%%/%dmV iraw=%dmA vbus=%d gauge=%d pwr=state%d/en%d/set%dmA up=%llds",
                  (cur_mic - mic_frames) / secs, (unsigned)(cur_mic_drop - mic_dropped),
                  (unsigned)(cur_mic_err - mic_errors),
@@ -484,6 +517,9 @@ static void telemetry_task(void *arg)
                  (cur_down - down_frames) / secs, (unsigned)(cur_under - down_under),
                  (unsigned)(cur_idle - down_idle),
                  (unsigned)(cur_dec - dec_err), (unsigned)(cur_enc - enc_err), (unsigned)(cur_send - send_err),
+                 (cur_frames - frames_prev) / secs,
+                 (cur_frames == frames_prev) ? 0.0 : (double)(cur_us - us_prev) / 1000.0 / (double)(cur_frames - frames_prev),
+                 (unsigned)s_input_latency_us,
                  (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024),
                  (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024),
                  (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024),
@@ -496,6 +532,7 @@ static void telemetry_task(void *arg)
         down_frames = cur_down; down_under = cur_under; down_idle = cur_idle;
         mic_frames = cur_mic; mic_errors = cur_mic_err; mic_dropped = cur_mic_drop;
         enc_err = cur_enc; send_err = cur_send; dec_err = cur_dec;
+        frames_prev = cur_frames; us_prev = cur_us;
         window_start = now;
     }
 }
@@ -729,10 +766,12 @@ static lv_display_t *display_start(void)
             .rotation = 0,
             .hor_res = BSP_LCD_H_RES,
             .ver_res = BSP_LCD_V_RES,
-            .buffer_height = 50,
+            /* Double buffering lets the next frame render while the QSPI DMA
+             * flushes the previous one; 30 lines x 2 fits in internal RAM. */
+            .buffer_height = 30,
             .use_psram = false,
-            .enable_ppa_accel = false,
-            .require_double_buffer = false,
+            .enable_ppa_accel = true,
+            .require_double_buffer = true,
         },
         .tear_avoid_mode = ESP_LV_ADAPTER_TEAR_AVOID_MODE_NONE,
     };
@@ -740,6 +779,8 @@ static lv_display_t *display_start(void)
     if (disp == NULL) {
         return NULL;
     }
+    lv_display_add_event_cb(disp, on_render_start, LV_EVENT_RENDER_START, NULL);
+    lv_display_add_event_cb(disp, on_render_ready, LV_EVENT_RENDER_READY, NULL);
 
     /* CST9217 touch: without this the tiles cannot be tapped. */
     bsp_display_cfg_t touch_cfg = {
@@ -986,6 +1027,7 @@ static void refresh_captions(void)
 static void on_mic(lv_event_t *e)
 {
     (void)e;
+    ESP_LOGI(TAG, "capture %s", s_talking ? "stop" : "start");
     if (s_talking) {
         s_talking = false;
         beep_play(s_beep_down, s_beep_down_len);
@@ -1017,6 +1059,7 @@ static void glow_opa_cb(void *var, int32_t value)
 
 static void puck_pressed(lv_event_t *e)
 {
+    s_input_us = esp_timer_get_time();
     lv_obj_set_style_transform_scale((lv_obj_t *)lv_event_get_target(e), 243, 0);
 }
 
@@ -1112,17 +1155,34 @@ static void set_backlight(uint8_t value)
     }
 }
 
-static void overlay_opa_cb(void *var, int32_t value)
+#define BACKLIGHT_AWAKE 0xFF
+#define BACKLIGHT_SLEEP 0x28
+
+static int s_backlight = BACKLIGHT_AWAKE;
+static lv_timer_t *s_backlight_timer;
+
+/* Step the panel brightness instead of fading a full-screen layer: the layer
+ * fade re-rendered the whole panel every frame (~90 ms), the dimmer is free. */
+static void backlight_step(lv_timer_t *timer)
 {
-    lv_obj_set_style_opa((lv_obj_t *)var, (lv_opa_t)value, 0);
+    (void)timer;
+    const int target = s_sleeping ? BACKLIGHT_SLEEP : BACKLIGHT_AWAKE;
+    const int delta = target - s_backlight;
+    if (delta == 0) {
+        if (s_backlight_timer != NULL) {
+            lv_timer_delete(s_backlight_timer);
+            s_backlight_timer = NULL;
+        }
+        return;
+    }
+    s_backlight += (delta > 0 ? (delta < 40 ? delta : 40) : (delta > -40 ? delta : -40));
+    set_backlight((uint8_t)s_backlight);
 }
 
-static void overlay_faded_out(lv_anim_t *anim)
+static void backlight_ramp(void)
 {
-    (void)anim;
-    if (!s_sleeping && s_sleep_overlay != NULL) {
-        lv_obj_set_hidden(s_sleep_overlay, true);
-        lv_obj_set_style_opa(s_sleep_overlay, LV_OPA_COVER, 0);
+    if (s_backlight_timer == NULL) {
+        s_backlight_timer = lv_timer_create(backlight_step, 35, NULL);
     }
 }
 
@@ -1133,19 +1193,9 @@ static void sleep_show(void)
     }
     s_sleeping = true;
     lv_obj_set_hidden(s_sleep_overlay, false);
+    lv_obj_set_clickable(s_sleep_overlay, true);
     lv_obj_move_foreground(s_sleep_overlay);
-    lv_anim_delete(s_sleep_overlay, overlay_opa_cb);
-
-    lv_anim_t fade;
-    lv_anim_init(&fade);
-    lv_anim_set_var(&fade, s_sleep_overlay);
-    lv_anim_set_exec_cb(&fade, overlay_opa_cb);
-    lv_anim_set_values(&fade, LV_OPA_TRANSP, LV_OPA_COVER);
-    lv_anim_set_duration(&fade, 220);
-    lv_anim_set_path_cb(&fade, lv_anim_path_ease_out);
-    lv_anim_start(&fade);
-
-    set_backlight(0x28);
+    backlight_ramp();
 }
 
 static void sleep_hide(void)
@@ -1154,19 +1204,9 @@ static void sleep_hide(void)
         return;
     }
     s_sleeping = false;
-    lv_anim_delete(s_sleep_overlay, overlay_opa_cb);
-
-    lv_anim_t fade;
-    lv_anim_init(&fade);
-    lv_anim_set_var(&fade, s_sleep_overlay);
-    lv_anim_set_exec_cb(&fade, overlay_opa_cb);
-    lv_anim_set_values(&fade, LV_OPA_COVER, LV_OPA_TRANSP);
-    lv_anim_set_duration(&fade, 180);
-    lv_anim_set_path_cb(&fade, lv_anim_path_ease_in);
-    lv_anim_set_completed_cb(&fade, overlay_faded_out);
-    lv_anim_start(&fade);
-
-    set_backlight(0xFF);
+    lv_obj_set_clickable(s_sleep_overlay, false);
+    lv_obj_set_hidden(s_sleep_overlay, true);
+    backlight_ramp();
 }
 
 static void sleep_touched(lv_event_t *e)
@@ -1182,6 +1222,14 @@ static void update_status_pill(void)
     if (s_status_label == NULL || s_status_pill == NULL) {
         return;
     }
+    /* Called twice a second from refresh_captions: rebuilding the pill every
+     * time invalidated the centre puck and made the UI feel sluggish. */
+    const int state = s_talking ? 2 : (s_link_up ? 1 : 0);
+    static int applied = -1;
+    if (state == applied) {
+        return;
+    }
+    applied = state;
     if (s_talking) {
         lv_label_set_text(s_status_label, "ON AIR");
         lv_obj_set_style_text_color(s_status_label, lv_color_hex(0xFFC4BC), 0);
@@ -1197,19 +1245,27 @@ static void update_status_pill(void)
     }
 }
 
+static void set_if_changed(lv_obj_t *label, const char *text)
+{
+    if (label == NULL || text == NULL) {
+        return;
+    }
+    const char *current = lv_label_get_text(label);
+    if (current != NULL && strcmp(current, text) == 0) {
+        return; /* avoids invalidating the puck every second */
+    }
+    lv_label_set_text(label, text);
+}
+
 static void tick_clock(void)
 {
     char buffer[48];
     clock_time_text(buffer, sizeof(buffer));
-    if (s_centre_time_label != NULL) {
-        lv_label_set_text(s_centre_time_label, buffer);
-    }
-    if (s_sleep_time_label != NULL) {
-        lv_label_set_text(s_sleep_time_label, buffer);
-    }
+    set_if_changed(s_centre_time_label, buffer);
+    set_if_changed(s_sleep_time_label, buffer);
     if (s_sleep_date_label != NULL) {
         clock_date_text(buffer, sizeof(buffer));
-        lv_label_set_text(s_sleep_date_label, buffer);
+        set_if_changed(s_sleep_date_label, buffer);
     }
     if (s_sleep_info_label != NULL) {
         snprintf(buffer, sizeof(buffer), "WiFi %d dBm    BAT %d%%",
@@ -1228,27 +1284,22 @@ static void ui_start(void)
     }
     bsp_display_lock(0);
     lv_obj_t *screen = lv_screen_active();
-    lv_obj_set_style_bg_color(screen, lv_color_hex(0x05070D), 0);
-    lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_VER, 0);
-    lv_obj_set_style_bg_grad_color(screen, lv_color_hex(0x0E1B33), 0);
+    lv_obj_set_style_bg_color(screen, lv_color_hex(0x080D18), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
 
     /* Ambient light: three faint discs give the glass something to sit on. */
     static const struct { int x, y, r; uint32_t color; lv_opa_t opa; } blooms[] = {
-        { -140, -170, 200, 0x2F6FEB, LV_OPA_10 },
-        { 210, 120, 210, 0x7046A8, LV_OPA_10 },
-        { 150, -180, 140, 0x2C7AA8, LV_OPA_10 },
+        { -150, -150, 180, 0x2F6FEB, LV_OPA_10 },
+        { 190, 150, 190, 0x7046A8, LV_OPA_10 },
     };
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
         lv_obj_t *bloom = lv_obj_create(screen);
         lv_obj_set_size(bloom, blooms[i].r, blooms[i].r);
         lv_obj_set_style_radius(bloom, LV_RADIUS_CIRCLE, 0);
         lv_obj_set_style_bg_color(bloom, lv_color_hex(blooms[i].color), 0);
         lv_obj_set_style_bg_opa(bloom, blooms[i].opa, 0);
         lv_obj_set_style_border_width(bloom, 0, 0);
-        lv_obj_set_style_shadow_width(bloom, 60, 0);
-        lv_obj_set_style_shadow_color(bloom, lv_color_hex(blooms[i].color), 0);
-        lv_obj_set_style_shadow_opa(bloom, LV_OPA_10, 0);
+        lv_obj_set_style_shadow_width(bloom, 0, 0);
         lv_obj_set_scrollable(bloom, false);
         lv_obj_set_clickable(bloom, false);
         lv_obj_align(bloom, LV_ALIGN_CENTER, blooms[i].x / 2, blooms[i].y / 2);
@@ -1275,6 +1326,7 @@ static void ui_start(void)
         lv_obj_t *chip = lv_obj_create(screen);
         lv_obj_set_size(chip, 76, 76);
         glass_style(chip, satellites[i].tint, LV_RADIUS_CIRCLE);
+        lv_obj_set_style_shadow_width(chip, 0, 0);
         lv_obj_set_clickable(chip, true);
         lv_obj_add_event_cb(chip, satellites[i].cb, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(chip, puck_pressed, LV_EVENT_PRESSED, NULL);
@@ -1309,9 +1361,7 @@ static void ui_start(void)
     lv_obj_set_style_bg_color(s_mic_glow, lv_color_hex(0x2F6FEB), 0);
     lv_obj_set_style_bg_opa(s_mic_glow, LV_OPA_20, 0);
     lv_obj_set_style_border_width(s_mic_glow, 0, 0);
-    lv_obj_set_style_shadow_width(s_mic_glow, 60, 0);
-    lv_obj_set_style_shadow_color(s_mic_glow, lv_color_hex(0x2F6FEB), 0);
-    lv_obj_set_style_shadow_opa(s_mic_glow, LV_OPA_30, 0);
+    lv_obj_set_style_shadow_width(s_mic_glow, 0, 0);
     lv_obj_set_scrollable(s_mic_glow, false);
     lv_obj_set_clickable(s_mic_glow, false);
     lv_obj_align(s_mic_glow, LV_ALIGN_CENTER, 0, 0);
@@ -1331,13 +1381,14 @@ static void ui_start(void)
     lv_obj_set_style_arc_width(s_mic_ring, 5, LV_PART_INDICATOR);
     lv_obj_set_style_arc_opa(s_mic_ring, LV_OPA_30, LV_PART_INDICATOR);
     lv_obj_set_style_arc_color(s_mic_ring, lv_color_hex(0x9CC4FF), LV_PART_INDICATOR);
-    lv_obj_set_style_arc_rounded(s_mic_ring, true, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(s_mic_ring, false, LV_PART_INDICATOR);
     lv_obj_remove_style(s_mic_ring, NULL, LV_PART_KNOB);
     lv_obj_set_clickable(s_mic_ring, false);
 
     s_mic_tile = lv_obj_create(screen);
     lv_obj_set_size(s_mic_tile, 176, 176);
     glass_style(s_mic_tile, 0x2F6FEB, LV_RADIUS_CIRCLE);
+    lv_obj_set_style_shadow_width(s_mic_tile, 0, 0);
     lv_obj_set_clickable(s_mic_tile, true);
     lv_obj_add_event_cb(s_mic_tile, on_mic, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(s_mic_tile, puck_pressed, LV_EVENT_PRESSED, NULL);
@@ -1385,7 +1436,7 @@ static void ui_start(void)
     lv_obj_set_style_bg_opa(s_sleep_overlay, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(s_sleep_overlay, 0, 0);
     lv_obj_set_scrollable(s_sleep_overlay, false);
-    lv_obj_set_clickable(s_sleep_overlay, true);
+    lv_obj_set_clickable(s_sleep_overlay, false);
     lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_RELEASED, NULL);
     lv_obj_add_event_cb(s_sleep_overlay, sleep_touched, LV_EVENT_PRESS_LOST, NULL);
     lv_obj_center(s_sleep_overlay);
