@@ -58,6 +58,19 @@
 
 static const char *TAG = "bridge";
 
+/* 88 px digits for the sleep clock; generated with lv_font_conv. */
+LV_FONT_DECLARE(sleep_digits);
+
+/* Short confirmation tones mixed into the speaker stream. */
+#define BEEP_MAX_SAMPLES 2048
+static int16_t s_beep_up[BEEP_MAX_SAMPLES];
+static int16_t s_beep_down[BEEP_MAX_SAMPLES];
+static int s_beep_up_len;
+static int s_beep_down_len;
+static const int16_t *s_beep;
+static int s_beep_len;
+static volatile int s_beep_pos = -1;
+
 /* Counters sampled by telemetry_task(); one writer each, so plain increments. */
 static volatile uint32_t s_up_frames;
 static volatile uint32_t s_up_bytes;
@@ -266,6 +279,39 @@ static esp_err_t opus_start(void)
     return ESP_OK;
 }
 
+static int beep_build(int16_t *out, int capacity, int freq_hz, int ms)
+{
+    const int count = (ms * 16000) / 1000;
+    if (count > capacity) {
+        return capacity;
+    }
+    const int ramp = count / 6; /* short fade in and out, no click */
+    for (int i = 0; i < count; i++) {
+        const double phase = 2.0 * 3.14159265358979 * freq_hz * i / 16000.0;
+        double gain = 0.22;
+        if (i < ramp) gain *= (double)i / ramp;
+        if (i > count - ramp) gain *= (double)(count - i) / ramp;
+        out[i] = (int16_t)(sin(phase) * gain * 32767.0);
+    }
+    return count;
+}
+
+static void beep_init(void)
+{
+    s_beep_up_len = beep_build(s_beep_up, BEEP_MAX_SAMPLES, 880, 70);
+    s_beep_down_len = beep_build(s_beep_down, BEEP_MAX_SAMPLES, 587, 90);
+}
+
+static void beep_play(const int16_t *buffer, int length)
+{
+    if (buffer == NULL || length <= 0) {
+        return;
+    }
+    s_beep = buffer;
+    s_beep_len = length;
+    s_beep_pos = 0;
+}
+
 /* Mic -> ring. Never blocks on the network: the sender drains the ring at
  * whatever rate TCP allows and drops when the ring is full. */
 static void mic_task(void *arg)
@@ -369,11 +415,21 @@ static void *spk_task(void *arg)
                 }
                 memset(mono, 0, sizeof(mono));
             }
-            /* The speaker codec runs on the shared stereo bus. */
+            /* The speaker codec runs on the shared stereo bus; the
+             * confirmation tone is mixed on top of whatever is playing. */
             for (int i = 0; i < FRAME_SAMPLES; i++) {
                 int16_t v = (i < samples) ? mono[i] : 0;
+                const int pos = s_beep_pos;
+                if (pos >= 0 && pos < s_beep_len) {
+                    const int mixed = v + s_beep[pos];
+                    v = (int16_t)(mixed > 32767 ? 32767 : (mixed < -32768 ? -32768 : mixed));
+                    s_beep_pos = pos + 1;
+                }
                 stereo[2 * i] = v;
                 stereo[2 * i + 1] = v;
+            }
+            if (s_beep_pos >= s_beep_len) {
+                s_beep_pos = -1;
             }
             esp_codec_dev_write(s_spk, stereo, sizeof(stereo));
         }
@@ -930,9 +986,11 @@ static void on_mic(lv_event_t *e)
     (void)e;
     if (s_talking) {
         s_talking = false;
+        beep_play(s_beep_down, s_beep_down_len);
         send_ctrl("ptt_up");
     } else if (s_link_up) {
         s_talking = true;
+        beep_play(s_beep_up, s_beep_up_len);
         send_ctrl("ptt_down");
     } else {
         /* No peer: the status pill already reads NO LINK, nothing else to do. */
@@ -1052,6 +1110,20 @@ static void set_backlight(uint8_t value)
     }
 }
 
+static void overlay_opa_cb(void *var, int32_t value)
+{
+    lv_obj_set_style_opa((lv_obj_t *)var, (lv_opa_t)value, 0);
+}
+
+static void overlay_faded_out(lv_anim_t *anim)
+{
+    (void)anim;
+    if (!s_sleeping && s_sleep_overlay != NULL) {
+        lv_obj_set_hidden(s_sleep_overlay, true);
+        lv_obj_set_style_opa(s_sleep_overlay, LV_OPA_COVER, 0);
+    }
+}
+
 static void sleep_show(void)
 {
     if (s_sleeping || s_sleep_overlay == NULL) {
@@ -1060,6 +1132,16 @@ static void sleep_show(void)
     s_sleeping = true;
     lv_obj_set_hidden(s_sleep_overlay, false);
     lv_obj_move_foreground(s_sleep_overlay);
+
+    lv_anim_t fade;
+    lv_anim_init(&fade);
+    lv_anim_set_var(&fade, s_sleep_overlay);
+    lv_anim_set_exec_cb(&fade, overlay_opa_cb);
+    lv_anim_set_values(&fade, LV_OPA_TRANSP, LV_OPA_COVER);
+    lv_anim_set_duration(&fade, 220);
+    lv_anim_set_path_cb(&fade, lv_anim_path_ease_out);
+    lv_anim_start(&fade);
+
     set_backlight(0x28);
 }
 
@@ -1069,7 +1151,17 @@ static void sleep_hide(void)
         return;
     }
     s_sleeping = false;
-    lv_obj_set_hidden(s_sleep_overlay, true);
+
+    lv_anim_t fade;
+    lv_anim_init(&fade);
+    lv_anim_set_var(&fade, s_sleep_overlay);
+    lv_anim_set_exec_cb(&fade, overlay_opa_cb);
+    lv_anim_set_values(&fade, LV_OPA_COVER, LV_OPA_TRANSP);
+    lv_anim_set_duration(&fade, 180);
+    lv_anim_set_path_cb(&fade, lv_anim_path_ease_in);
+    lv_anim_set_completed_cb(&fade, overlay_faded_out);
+    lv_anim_start(&fade);
+
     set_backlight(0xFF);
 }
 
@@ -1295,7 +1387,7 @@ static void ui_start(void)
     lv_obj_center(s_sleep_overlay);
 
     s_sleep_time_label = lv_label_create(s_sleep_overlay);
-    lv_obj_set_style_text_font(s_sleep_time_label, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_font(s_sleep_time_label, &sleep_digits, 0);
     lv_obj_set_style_text_color(s_sleep_time_label, lv_color_hex(0xE8F0FC), 0);
     lv_label_set_text(s_sleep_time_label, "--:--");
     lv_obj_align(s_sleep_time_label, LV_ALIGN_CENTER, 0, -60);
@@ -1612,6 +1704,10 @@ void app_main(void)
 {
     setenv("TZ", "CST-8", 1);
     tzset();
+    beep_init();
+    /* The adapter logs a few lock timeouts while the first frame renders;
+     * they are harmless and drown out real errors in a serial capture. */
+    esp_log_level_set("esp_lvgl:adapter", ESP_LOG_NONE);
     s_tx_lock = xSemaphoreCreateMutex();
     s_opus_lock = xSemaphoreCreateMutex();
     /* NOSPLIT rings keep one frame per item, so the wire format can never be
