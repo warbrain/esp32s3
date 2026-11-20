@@ -16,20 +16,25 @@ sdkconfig.old
 # directories called "models", and those are source code.
 /models/
 /hmi/models/
+/voice/models/
 *.gguf
 *.onnx
 *.safetensors
 *.wav
+# The pinned audio.cpp CMake configuration embeds these tracked demo assets.
+!/voice/3rd_party/native/source/webui/native/demo_voices/*.wav
 
 # Local runtime output
 /hmi/logs/
 /hmi/config/app.yaml
+/voice/logs/
+/voice/config/app.yaml
 
 # Docs are not tracked in this repository, but upstream files are: several
 # third-party CMakeLists require their README at configure time (CPack
 # resources), e.g. 3rd_party/native/source/external/sentencepiece.
 *.md
-!hmi/3rd_party/**/*.md
+!voice/3rd_party/**/*.md
 /docs/
 
 # IDE / OS
