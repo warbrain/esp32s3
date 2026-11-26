@@ -29,6 +29,13 @@ endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/project.cmake")
 project(muse-gadget)
+
+# The application target collects every component's include paths. Set this
+# after ESP-IDF creates its component directories so their rules stay unchanged.
+if(CMAKE_HOST_WIN32 AND CMAKE_GENERATOR MATCHES "^Ninja")
+    set(CMAKE_NINJA_FORCE_RESPONSE_FILE ON)
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/validate_config.cmake")
 
 if(CONFIG_MUSE_LOCAL_VOICE AND CONFIG_BT_NIMBLE_MAX_BONDS EQUAL 1
