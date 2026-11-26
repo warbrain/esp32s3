@@ -1,0 +1,1258 @@
+<!--
+Copyright (c) Meta Platforms, Inc. and affiliates.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+# Devices
+
+These are the boards the ESP32 Device SDK runs on. Each board is an `sdkconfig`
+overlay: a short file of settings loaded on top of
+[`../sdkconfig.defaults`](../sdkconfig.defaults) that picks the chip, flash,
+memory, button, and how the device shows its status. The ESP32-C5 DevKitC-1 is
+the default and needs no overlay.
+
+Every board pairs with the Muse app, joins your Wi-Fi, and holds an encrypted
+session to Muse. The rest depends on the hardware.
+
+## Supported devices
+
+| Board | Chip | Display | Flash / PSRAM | Reference | Buy |
+|---|---|---|---|---|---|
+| **ESP32-C5 DevKitC-1** | ESP32-C5 | None (RGB status light) | 8 MB / 8 MB | [Espressif docs](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32c5/esp32-c5-devkitc-1/index.html) | [DigiKey](https://www.digikey.com/en/products/result?keywords=ESP32-C5-DevKitC-1) |
+| **ESP32-C6 devkit without PSRAM** | ESP32-C6 | None (RGB status light) | 8 MB or more / none | [Espressif docs](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/user_guide.html) | — |
+| **Espressif ESP32-S3-DevKitC-1 (N8R8)** | ESP32-S3 | None (RGB status light) | 8 MB / 8 MB | [Espressif docs](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html) | — |
+| **ideaspark ESP32 with 1.9" display** | ESP32 | 1.9" 170×320 LCD | 16 MB / none | — | [Amazon](https://www.amazon.com/s?k=ideaspark+ESP32+1.9+inch+ST7789) |
+| **Waveshare ESP32-C6-LCD-1.47** | ESP32-C6 | 1.47" 172×320 LCD (ST7789) | 4 MB / none | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-C6-LCD-1.47) | [Waveshare](https://www.waveshare.com/esp32-c6-lcd-1.47.htm) |
+| **ESP32-2432S028 Cheap Yellow Display** (experimental) | ESP32 | 2.8" 240×320 LCD | 4 MB / none | — | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=ESP32-2432S028) |
+| **ESP32-C3 with 0.42" OLED** | ESP32-C3 | 0.42" 72×40 OLED (SSD1306), text only | 4 MB / none | — | — |
+| **M5Stack CoreMatrix** | ESP32-C61 | 16×16 white TM1680 LED matrix | 16 MB / 8 MB | [M5 docs](https://docs.m5stack.com/en/core/CoreMatrix), [setup](m5stack-corematrix.md) | — |
+| **Seeed SenseCAP Indicator** | ESP32-S3 | 4" 480×480 LCD | 8 MB / 8 MB | [Seeed wiki](https://wiki.seeedstudio.com/SenseCAP_Indicator_Get_Started/) | [Seeed Studio](https://www.seeedstudio.com/SenseCAP-Indicator-D1-p-5643.html) |
+| **Waveshare ESP32-S3-1.54inch-ePaper V2** | ESP32-S3 | 1.54" 200×200 black and white e-paper (SSD1681) | 8 MB / 8 MB | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-S3-1.54inch-ePaper) | [Waveshare](https://www.waveshare.com/esp32-s3-1.54inch-epaper.htm) |
+| **Waveshare ESP32-S3-ePaper-1.54G** | ESP32-S3 | 1.54" 200×200 four-colour e-paper | 8 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-ePaper-1.54G), [GitHub](https://github.com/waveshareteam/ESP32-S3-ePaper-1.54G) | [Waveshare](https://www.waveshare.com/esp32-s3-epaper-1.54g.htm) |
+| **Seeed reTerminal E1001** | ESP32-S3 | 7.5" 800×480 black and white e-paper | 32 MB / 8 MB | [Seeed wiki](https://wiki.seeedstudio.com/getting_started_with_reterminal_e1001/) | [Seeed Studio](https://www.seeedstudio.com/reTerminal-E1001-p-6534.html) |
+| **Seeed reTerminal E1002** | ESP32-S3 | 7.3" 800×480 six-colour e-paper (E Ink Spectra 6) | 32 MB / 8 MB | [Seeed wiki](https://wiki.seeedstudio.com/reterminal_e10xx_with_esphome/) | [Seeed Studio](https://www.seeedstudio.com/reTerminal-E1002-p-6533.html) |
+| **Seeed reTerminal E1003** | ESP32-S3 | 10.3" 1872×1404 e-paper (IT8951), black and white or 16 gray levels | 32 MB / 8 MB | [Seeed wiki](https://wiki.seeedstudio.com/getting_started_with_reterminal_e1003/) | — |
+| **Seeed reTerminal Sticky (experimental)** | ESP32-S3 | 3.97" SSD1677 e-paper (native 800×480; portrait 480×800, four gray levels for images/UI) | 32 MB / 8 MB | [Seeed hardware overview](https://www.seeedstudio.com/sticky/docs/en/device-guide/hardware-overview/) | [Seeed Studio](https://www.seeedstudio.com/reTerminal-Sticky-p-6861.html) |
+| **Home Assistant Voice Preview Edition** | ESP32-S3 | None (12-LED ring) | 16 MB / 8 MB | [ESPHome repo](https://github.com/esphome/home-assistant-voice-pe) | [Home Assistant](https://www.home-assistant.io/voice-pe/) |
+| **Seeed reSpeaker Lite with XIAO ESP32-S3 (experimental)** | ESP32-S3 | None (single RGB LED) | 8 MB / 8 MB | [Seeed wiki](https://wiki.seeedstudio.com/xiao_respeaker/) | — |
+| **Seeed reSpeaker XVF3800 with XIAO ESP32-S3 (experimental)** | ESP32-S3 | None (vendor ring unused) | 8 MB / 8 MB | [Setup](seeed-respeaker-xvf3800.md), [Seeed wiki](https://wiki.seeedstudio.com/respeaker_xvf3800_xiao_getting_started/) | — |
+| **Waveshare ESP32-S3-Touch-AMOLED-1.75C** | ESP32-S3 | 1.75" 466×466 round AMOLED, touch | 32 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.75C), [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.75C) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-amoled-1.75c.htm) |
+| **Waveshare ESP32-S3-Touch-LCD-1.85B** | ESP32-S3 | 1.85" 360×360 LCD, touch | 16 MB / 8 MB | [Vendor source](https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.85B) | — |
+| **Waveshare ESP32-S3-Touch-LCD-1.85C** | ESP32-S3 | 1.85" 360x360 round LCD, touch | 16 MB / 8 MB | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-1.85C) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-1-85c.htm) |
+| **Waveshare ESP32-S3-Touch-LCD-1.46** (also 1.46B, 1.46C) | ESP32-S3 | 1.46" 412x412 round LCD, touch | 16 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-Touch-LCD-1.46) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-1.46.htm) |
+| **Waveshare ESP32-S3-Touch-AMOLED-1.43** | ESP32-S3 | 1.43" 466×466 round AMOLED, touch | 16 MB / 8 MB | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-S3-Touch-AMOLED-1.43) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-amoled-1.43.htm) |
+| **Waveshare ESP32-S3-Touch-AMOLED-1.75** | ESP32-S3 | 1.75" 466×466 round AMOLED, touch | 16 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.75), [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.75) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-amoled-1.75.htm) |
+| **Waveshare ESP32-S3-Touch-AMOLED-1.43C** | ESP32-S3 | 1.43" 466×466 round AMOLED, touch | 8 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.43C), [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.43C) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-amoled-1.43c.htm) |
+| **Waveshare ESP32-S3-Touch-AMOLED-2.16** | ESP32-S3 | 2.16" 480×480 AMOLED, touch | 16 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-2.16), [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-2.16) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-amoled-2.16.htm) |
+| **Espressif ESP-Mosaico (experimental)** | ESP32-S31 | 2.16" 480×480 AMOLED, touch | 16 MB / 16 MB | [Espressif BSP](https://github.com/esp-mosaico/esp-mosaico-bsp), [esp-mosaico-vibe](https://github.com/esp-mosaico/esp-mosaico-vibe) | — |
+| **Waveshare ESP32-S3-Touch-AMOLED-2.06** | ESP32-S3 | 2.06" 410×502 AMOLED, touch | 32 MB / 8 MB | [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-2.06) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-amoled-2.06.htm) |
+| **OSTB EchoEar-2ST (experimental)** | ESP32-S3 rev 0.2 | 1.85" 360×360 round ST77916 LCD, touch | 16 MB / 8 MB octal (measured) | [Product](https://docs.yishierniao.cn/details/ai/echoear-2st/product.html), [setup](ostb-echoear-2st.md) | — |
+| **Espressif ESP32-S3-BOX-3** | ESP32-S3 | 2.4" 320×240 LCD, touch | 16 MB / 16 MB | [Espressif BSP](https://github.com/espressif/esp-bsp/tree/master/bsp/esp-box-3), [ESP-BOX](https://github.com/espressif/esp-box) | — |
+| **ALIENTEK ATK-DNESP32S3-BOX V1.1** | ESP32-S3 | 2.4" 320×240 LCD | 16 MB / 8 MB | [xiaozhi-esp32 board](https://github.com/78/xiaozhi-esp32/tree/main/main/boards/alientek/atk-dnesp32s3-box) | — |
+| **ALIENTEK ATK-DNESP32S3-BOX2** (experimental) | ESP32-S3 | 2.4" 320×240 LCD | 16 MB / 8 MB | [xiaozhi-esp32 board](https://github.com/78/xiaozhi-esp32/tree/main/main/boards/alientek/atk-dnesp32s3-box2-wifi), [setup](atk-dnesp32s3-box2.md) | — |
+| **AIPI Lite** | ESP32-S3 | 128×128 LCD | 16 MB / 8 MB | [xiaozhi-esp32 board](https://github.com/78/xiaozhi-esp32/tree/main/main/boards/xorigin/aipi-lite) | [AliExpress](https://www.aliexpress.com/w/wholesale-aipi-lite.html) |
+| **Waveshare ESP32-C6-Touch-AMOLED-1.8** | ESP32-C6 | 1.8" 368×448 AMOLED, touch | 16 MB / none | [Waveshare wiki](https://docs.waveshare.com/ESP32-C6-Touch-AMOLED-1.8) | [Waveshare](https://www.waveshare.com/esp32-c6-touch-amoled-1.8.htm) |
+| **Waveshare ESP32-S3-Touch-AMOLED-1.8** | ESP32-S3 | 1.8" 368×448 AMOLED, touch | 16 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.8), [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.8) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-amoled-1.8.htm) |
+| **Waveshare ESP32-C6-Touch-AMOLED-2.06** | ESP32-C6 | 2.06" 410×502 AMOLED, touch | 16 MB / none | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-C6-Touch-AMOLED-2.06) | [Waveshare](https://www.waveshare.com/esp32-c6-touch-amoled-2.06.htm) |
+| **Seeed SenseCAP Watcher** | ESP32-S3 | 1.45" 412×412 round LCD, touch | 32 MB / 8 MB | [Seeed wiki](https://wiki.seeedstudio.com/watcher/), [GitHub](https://github.com/Seeed-Studio/SenseCAP-Watcher-Firmware) | [Seeed Studio](https://www.seeedstudio.com/SenseCAP-Watcher-W1-A-p-5979.html) |
+| **M5Stack Cardputer ADV (experimental)** | ESP32-S3 | 1.14" 240×135 LCD | 8 MB / none | [M5Stack docs](https://docs.m5stack.com/en/core/Cardputer-Adv) | — |
+| **M5Stack AtomS3 + Atomic Voice Base (experimental)** | ESP32-S3 | 0.85" 128×128 LCD, ES8311 mic/speaker | 8 MB / none | [AtomS3](https://docs.m5stack.com/en/core/AtomS3), [Atomic Voice Base](https://docs.m5stack.com/en/atom/Atomic_Voice_Base), [M5Unified](https://github.com/m5stack/M5Unified) | — |
+| **M5Stack StickS3** | ESP32-S3 | 1.14" 135×240 LCD | 8 MB / 8 MB | [M5Stack docs](https://docs.m5stack.com/en/core/StickS3), [M5Unified](https://github.com/m5stack/M5Unified) | [M5Stack](https://shop.m5stack.com/products/m5sticks3-esp32s3-mini-iot-dev-kit) |
+| **M5Stack StopWatch** | ESP32-S3 | 1.75" 466×466 round AMOLED, touch | 16 MB / 8 MB | [M5Stack docs](https://docs.m5stack.com/en/core/StopWatch), [M5Unified](https://github.com/m5stack/M5Unified), [factory firmware](https://github.com/m5stack/M5StopWatch-UserDemo) | — |
+| **M5Stack TriviaPOD (experimental)** | ESP32-S3 | 1.75" 466×466 round AMOLED, touch | 32 MB / 8 MB | [M5Stack docs](https://docs.m5stack.com/en/core/TriviaPOD) | — |
+| **Seeed XIAO ESP32-S3 1.47 Touch Display** | ESP32-S3 (XIAO ESP32-S3 Plus) | 1.47" 172×320 IPS LCD (JD9853A), touch | 16 MB / 8 MB | [Seeed wiki](https://wiki.seeedstudio.com/getting_started_1.47_inch_touch_display_esp32s3/), [setup](seeed-xiao-s3-147.md) | [Seeed Studio](https://www.seeedstudio.com/1-47-Inch-Touch-Display-Powered-by-XIAO-ESP32-S3-Plus-p-6996.html) |
+| **M5Stack CoreS3** | ESP32-S3 | 2" 320×240 LCD, touch | 16 MB / 8 MB | [M5Stack docs](https://docs.m5stack.com/en/core/CoreS3), [Espressif BSP](https://github.com/espressif/esp-bsp/tree/master/bsp/m5stack_core_s3) | — |
+| **M5Stack CoreS3 Lite** | ESP32-S3 | 2" 320×240 LCD, touch | 16 MB / 8 MB | [M5Stack docs](https://docs.m5stack.com/en/core/CoreS3-Lite), [Espressif BSP](https://github.com/espressif/esp-bsp/tree/master/bsp/m5stack_core_s3) | — |
+| **Guition JC3248W535** | ESP32-S3 | 3.5" 320×480 IPS LCD, touch | 16 MB / 8 MB | [JC3248W535C notes](https://github.com/sirisakG2/JC3248W535C), [JC3248W535-Driver](https://github.com/me-processware/JC3248W535-Driver) | — |
+| **Waveshare ESP32-S3-Touch-LCD-1.28** | ESP32-S3 | 1.28" 240×240 round LCD (GC9A01A), touch | 16 MB / 2 MB | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-1.28) | — |
+| **SpotPear ESP32-AI-1.28 v1.0 (experimental)** | ESP32-S3 | 1.28" 240×240 round LCD (GC9A01), no touch | 16 MB / 8 MB octal | [Port notes](spotpear-esp32-ai-128.md) | — |
+| **Waveshare ESP32-S3-Touch-LCD-7** | ESP32-S3 | 7" 800×480 RGB LCD, touch | 16 MB / 8 MB | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7), [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-LCD-7) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-7.htm) |
+| **Waveshare ESP32-S3-Touch-LCD-3.49 V2** | ESP32-S3 | 3.49" 172×640 IPS LCD, touch | 16 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-Touch-LCD-3.49), [GitHub](https://github.com/waveshareteam/ESP32-S3-Touch-LCD-3.49-V2) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-3.49.htm) |
+| **FoloToy AI Passport (experimental)** | ESP32-C3 | 240×320 LCD, rounded corners | 8 MB / none | [FoloToy repo](https://github.com/FoloToy/ai-passport) | [FoloToy](https://ai-passport.folotoy.cn/en/) |
+| **Waveshare ESP32-P4-WIFI6-Touch-LCD-3.5** | ESP32-P4 + ESP32-C6 | 3.5" 320×480 LCD, touch | 16 MB / 32 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-P4-WIFI6-Touch-LCD-3.5), [GitHub](https://github.com/waveshareteam/ESP32-P4-WIFI6-Touch-LCD-3.5); [setup](waveshare-p4-lcd35.md) | [Waveshare](https://www.waveshare.com/esp32-p4-wifi6-touch-lcd-3.5.htm) |
+| **M5Stack StickC Plus2** | ESP32 | 1.14" 135×240 LCD | 8 MB / 2 MB | [M5Stack docs](https://docs.m5stack.com/en/core/M5StickC%20PLUS2), [M5Unified](https://github.com/m5stack/M5Unified) | [M5Stack](https://shop.m5stack.com/products/m5stickc-plus2-esp32-mini-iot-development-kit) (end of life) |
+| **Elecrow CrowPanel Advance 4.3 V1.3** | ESP32-S3 | 4.3" 800×480 RGB LCD, GT911 touch | 16 MB / 8 MB | [Elecrow wiki](https://www.elecrow.com/wiki/CrowPanel_Advance_4.3-HMI_ESP32_AI_Display.html), [factory source](https://github.com/Elecrow-RD/CrowPanel-Advance-4.3-HMI-ESP32-S3-AI-Powered-IPS-Touch-Screen-800x480) | — |
+| **M5Stack Core2 (v1.0)** | ESP32 | 2.0" 320×240 touch LCD | 16 MB / 8 MB | [M5Stack docs](https://docs.m5stack.com/en/core/Core2), [M5Unified](https://github.com/m5stack/M5Unified) | — |
+| **Freenove FNK0104B** | ESP32-S3 | 2.8" 240×320 LCD, touch | 16 MB / 8 MB | [Freenove repo](https://github.com/Freenove/Freenove_ESP32_S3_Display) | — |
+| **VN ESP32-S3 1.83-inch NV3023** | ESP32-S3 | 1.83" 284×240 LCD (NV3023) | 16 MB / 8 MB | [xiaozhi-esp32_vietnam board](https://github.com/TienHuyIoT/xiaozhi-esp32_vietnam) | — |
+| **Deotaland RoRoLee** | ESP32-S3 | 240×120 AMOLED (SH8501) | 16 MB / 8 MB | [rorolee.com](https://rorolee.com/) | [Rorolee](https://rorolee.com/products/rorolee-the-first-pocket-ai-agent) |
+| **VIEWE SmartRing-Plus** | ESP32-S3 | 1.85" 360×360 round LCD (ST77916), touch | 16 MB / 8 MB | [VIEWE GitHub](https://github.com/VIEWESMART/SmartRing-Plus), [BSP](https://components.espressif.com/components/viewesmart/smartring_plus); [setup](viewe-smartring-plus.md) | [VIEWE](https://viewedisplay.com/product/smart-ring-plus-esp32-ai-chatbot-1-8-inch-smart-touch-display/) |
+| **LilyGO T-Display-S3 AMOLED 1.75** | ESP32-S3 | 1.75" 466×466 round AMOLED (CO5300), touch | 16 MB / 8 MB | [LilyGO GitHub](https://github.com/Xinyuan-LilyGO/T-Display-S3-AMOLED-1.43-1.75) | [Tindie](https://www.tindie.com/products/lilygo/lilygo-t-display-s3-143-164-175-amoled/) |
+| **Waveshare ESP32-S3-Touch-LCD-1.9** | ESP32-S3 | 1.9" 170×320 LCD, touch | 16 MB / 8 MB | [Waveshare wiki](https://docs.waveshare.com/ESP32-S3-LCD-1.9/Resources-And-Documents), [GitHub](https://github.com/waveshareteam/ESP32-S3-LCD-1.9) | [Waveshare](https://www.waveshare.com/esp32-s3-lcd-1.9.htm) |
+| **Waveshare ESP32-S3-Touch-LCD-3.5** | ESP32-S3 | 3.5" 320×480 LCD (ST7796), touch | 16 MB / 8 MB | [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-3.5), [xiaozhi-esp32 board](https://github.com/78/xiaozhi-esp32/tree/main/main/boards/waveshare/esp32-s3-touch-lcd-3.5) | [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-3.5.htm) |
+| **DFRobot UNIHIKER K10** | ESP32-S3 | 2.8" 240×320 LCD (ILI9341), no touch | 16 MB / 8 MB | [K10 setup](dfrobot-unihiker-k10.md) | [DFRobot](https://www.dfrobot.com/product-2904.html), [distributors](https://www.unihiker.com/distributors) |
+
+The experimental [OSTB EchoEar-2ST port](ostb-echoear-2st.md) targets the
+measured 16 MB flash / 8 MB PSRAM unit. Its hardware and validation limits
+are documented separately; this is not a generic ESP-VoCat profile.
+
+The [Waveshare 1.85B port](waveshare-s3-185b.md) has its own pin map and
+BQ27220 gauge; the similarly named 1.85C profile is not interchangeable.
+
+## Features
+
+|  | DevKitC-1 | C6 devkit | ideaspark | Waveshare C6 LCD 1.47 | CYD (experimental) | C3 OLED 0.42 | CoreMatrix | SenseCAP Indicator | Waveshare S3 ePaper 1.54 | Waveshare S3 ePaper 1.54G | reTerminal E1001 | reTerminal E1002 | reTerminal E1003 | reTerminal Sticky* | HA Voice PE | reSpeaker Lite (experimental) | reSpeaker XVF3800 (experimental) | Waveshare S3 1.75C | Waveshare S3 1.75 | Waveshare S3 1.85C | Waveshare S3 1.46 | Waveshare S3 1.43 | Waveshare S3 1.43C | Waveshare S3 2.16 | Waveshare S3 2.06 | AIPI Lite | Waveshare C6 1.8 | Waveshare S3 1.8 | Waveshare C6 2.06 | Watcher | StickS3 | StickC Plus2 | Cardputer ADV | AtomS3 (experimental) | BOX-3 | StopWatch | TriviaPOD* | XIAO S3 1.47 | CoreS3 | CoreS3 Lite (experimental) | Core2 | FNK0104B | S3 DevKitC-1 | JC3248W535 | VN S3 1.83-inch | Waveshare LCD7 | Waveshare LCD 1.28 | Waveshare LCD 3.49 | AI Passport | EchoEar-2ST* | ATK BOX | ATK BOX2 | Waveshare P4 3.5 | RoRoLee | Waveshare S3 1.9 | SpotPear v1.0 (experimental) | SmartRing-Plus | Waveshare S3 1.85B | Waveshare S3 LCD 3.5 | UNIHIKER K10 | LilyGO 1.75 AMOLED |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Home-network tunnel | ✅ | — | — | — | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Enabled (unverified) | Enabled (unverified) | ✅ | ✅ | Enabled (unverified) | ✅ | ✅ | ✅ | ✅ | ✅ | Enabled (unverified) | ✅ | Enabled (unverified) | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Enabled (unverified) | Enabled | ✅ | ✅ (unverified) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | Enabled | ✅ | Enabled (unverified) | Enabled | ✅ | ✅ | Enabled | Enabled (unverified) | Enabled | ✅ | Enabled (unverified) | Enabled (unverified) |
+| Shows status on | Light | Light | Screen | Screen | Screen | Text | LED matrix | Screen | E-paper | E-paper | E-paper | E-paper | E-paper | E-paper | Light ring | RGB LED | App/log prompts | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Light | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar | Avatar |
+| Images from Muse | — | — | ✅ | ✅ | ✅ | — | 16×16, 1 bit | ✅ | Black and white | Four colours | Black and white | Six colours | Black and white | Four grays (checked on one unit) | — | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | Enabled (unverified) | ✅ | Enabled (unverified) | ✅ | — | Enabled (unverified) | — | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Enabled (unverified) | Enabled | ✅ | ✅ (unverified) | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | — | Enabled | Unverified | Unverified | ✅ | ✅ | Enabled (unverified) | Enabled | Enabled (unverified) | Enabled | ✅ | Enabled (unverified) | Enabled (unverified) |
+| UI and settings | — | — | — | — | — | — | — | — | — | — | — | — | — | Basic navigation checked | — | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Experimental | Experimental, no touch/menu key | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (unverified) | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | Experimental | Experimental | ✅ | ✅ | ✅ | ✅ | ✅ | No touch/menu key | ✅ | Enabled | ✅ | ✅ | ✅ |
+| Push-to-talk | — | — | — | — | — | — | — | — | — | BOOT | — | — | — | AI voice note checked; screen mic unverified | ✅ | XIAO BOOT | XIAO BOOT (unverified) | ✅ | ✅ | ✅ | ✅ | — | Unverified | ✅ | ✅ | ✅ | Text replies | ✅ | Text replies | ✅ | ✅ | ✅ | Text replies (experimental) | Text replies (experimental) | ✅ | ✅ | ✅ | USR1 | ✅ | ✅ (unverified) | ✅ | ✅ | — | With an added PDM or I2S mic | ✅ | — | — | ✅ | Text replies (experimental) | Screen mic | ✅ | ✅ | ✅ | ✅ | ✅ | BOOT voice note checked | Screen mic (unverified) | BOOT (unverified) | ✅ | A (hold) | Text replies |
+| Speaker and mic | — | — | — | — | — | — | — | — | — | ES8311 | — | — | — | PDM voice note checked, no speaker | ✅ | 16 kHz I2S | 16 kHz I2S (unverified) | ✅ | ✅ | ✅ | ✅ | — | ES8311, ES7210 (mics unverified) | ✅ | ✅ | ✅ | ✅ | Mic ✅, speaker unverified | ✅ | ✅ | ✅ | Buzzer and mic | ES8311 (experimental) | ES8311 mic (experimental) | ✅ | ✅ | ✅ | PDM mic, no speaker | ✅ | ✅ (unverified) | ✅ | ES8311 | — | Speaker (NS4168), no mic | ES8311, ES7210 | — | — | ✅ | ES8311 (experimental) | ES8311 / ES7210 | ES8311, one mic | ES8389 | ES8311 | ES8311, ES7210 | MAX98357 amp, INMP441 mic | MAX98357A / NP0557 | ES8311, one mic | ES8311 / ES7210 (unverified) | ES8311 | NS4168 / ES7243E | — |
+| Air sensors | — | — | — | — | — | — | — | D1S, D1Pro | — | Temperature, humidity | Temperature, humidity | Temperature, humidity | — | Temperature, humidity | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| Video from a phone (`MUSE_VIDEO=1`) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | Built, not run | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | Built, not run | Not built | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| Touch | — | — | — | — | — | — | — | — | — | — | — | — | — | GT911 (checked on one unit) | — | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | Unverified | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | — | — | — | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | — | — | ✅ | — | ✅ | — | ✅ | CST816S | ✅ | — | ✅ |
+| Battery status | — | — | — | — | — | — | — | — | — | — | Voltage, estimated percent (unverified) | Voltage, estimated percent | Voltage, estimated percent (unverified) | BQ27220 %/mV and charging checked | — | — | — | ✅ | ✅ | ✅ | Voltage, estimated percent (unverified) | Voltage only (unverified) | Unverified | ✅ | Unverified | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Voltage only | — | — | — | ✅ | Unverified | — | ✅ | ✅ | ✅ | Voltage only | — | — | Percent only | — | Voltage only (unverified) | Voltage only | No charging state | Unverified | — | Unverified | ✅ | ✅ | — | — | Unverified | BQ27220 percent, mV, charging | ✅ | — | Voltage and charging (SY6970) |
+| Over-the-air updates | Off | Off | Off | Off | Off | Off | Off | Off | Off | Off | Off | Off | Off | On (checked on one unit) | Off | Off | Off | On | On | On | On | On | On | On | On | On | On | On | On | On | On | On | Off | Off | On | On | On | Off | On | On (unverified) | On | On | Off | On | On | On | On | On | Off | On | On | On | On | On | On | On (unverified) | On | On (unverified) | On | On | On |
+| Buttons | BOOT | BOOT | BOOT | BOOT | BOOT | BOOT | BtnA | Top | BOOT | BOOT (talk/setup), PWR (tap: next page, hold: turn the screen) | Green | Green | Green | AI (talk/setup); Up/Down wake | Centre (talk), dial | XIAO BOOT (talk/setup) | XIAO BOOT (talk/setup), hardware mute | PWR (talk), BOOT | BOOT (talk), PWR | Hold face (talk), BOOT | Hold face (talk), BOOT, PWR | BOOT | BOOT (talk), hold face (talk) | BOOT, PWR (talk), KEY (talk) on top | BOOT (talk), PWR | Two | BOOT (talk), PWR | BOOT (talk), PWR | BOOT (talk), PWR | Wheel (hold to talk, click to sleep/wake, turn to review) | Front (talk), side (menu), PWR | Front (talk), side (menu), PWR | GO/Space (talk), Esc/Enter/arrows (menu) | Front (talk/pairing) | BOOT/CONFIG (talk) | Blue top-right (talk), yellow top-left (speaker), red bottom-left (power) | Top-right (talk), top-left (speaker), power | USR1 (talk/setup), USR2 (screen) | PWR (talk), RST | PWR (talk), RST | Touch BtnB (talk), PWR | BOOT (talk) | BOOT | BOOT or on-screen mic (talk) | BOOT (talk), Vol+/Vol- (menu) | BOOT (flash only) | Screen only | BOOT (talk), PWR | OK (talk), UP/DOWN (menu) | Touch; bottom power button | K0 (talk), K1 (menu) | M (talk), R (menu), L (speaker), Q (power) | BOOT (talk), PWR | BOOT (talk), VOL- and VOL+ (menu) | BOOT (talk) | BOOT (talk/pairing) | Screen mic (talk); BOOT inside the case | BOOT (talk), PWR (hardware) | BOOT (talk) | A (talk), B (menu), BOOT (wake from power off) | BOOT (confirm/wake) |
+
+*Sticky entries describe an experimental Muse port, not Seeed's factory
+firmware. On one unit the display, touch, voice notes/CJK replies, SHT40,
+BQ27220 readings and charging indicator were checked. The contributor also
+confirms FAT SD hotplug, battery-only Power off/wake, Muse OTA and a standby
+current measurement. The measured value and conditions will be added when
+provided; factory-equivalent low-power behaviour is not claimed.
+
+*EchoEar-2ST entries describe the one measured unit, tested on hardware for
+pairing, touch, recording and playback, sleep and wake, and reconnect. See
+[validation limits](ostb-echoear-2st.md#validation).
+
+*TriviaPOD entries describe one unit, running the StopWatch's board file
+and controls (M5Stack hasn't published a pin map). Display, touch, the three
+buttons, mic, speaker and power off were checked; sleep, wake and the
+battery weren't.
+
+The CrowPanel's BOOT button is push-to-talk; the GT911 touchscreen opens
+settings. Set the K1 switch to its `S1=0, S0=0` position for microphone and
+speaker operation. The board-control MCU sets the backlight from its documented
+0–245 range. This panel has no battery telemetry.
+
+The CYD (ESP32-2432S028) port is experimental. It runs the status screen only:
+its XPT2046 touch controller isn't used, and its 4 MB of flash holds one app
+slot, so it has no OTA. Its contributor reports a band of noise along the
+bottom of the screen that isn't diagnosed yet, so the bottom status bar and the
+bottom of large images may not show.
+
+Boards without PSRAM (the ideaspark, the C3 OLED, the CYD, the C6 boards, the Cardputer ADV, AtomS3 and the AI Passport) don't have room for
+the home-network tunnel. Muse can still reach and control them once the
+control session is up. The Waveshare C6, Cardputer ADV, AtomS3 and AI Passport also can't hold their own voice
+session, so push-to-talk sends your voice note over its control session to the
+Muse it's paired with, and the reply scrolls past as text. It can't show images either: the UI holds a whole image in
+PSRAM, where the ideaspark draws one straight to its screen.
+
+The Waveshare S3 1.8 is sold in two revisions, the original with an SH8601
+panel and FT3168 touch and the V2 with a CO5300 and CST820. Its BSP tells them
+apart by the touch controller that answers and sets the panel's column offset to
+match, so one build runs on both. Only the V2 has been run. Its amp enable is
+GPIO46, a strapping pin, and its PWR button reaches only the AXP2101, so the
+button is read over I2C. It comes with Waveshare's demo firmware: back up the
+flash before you flash Muse for the first time.
+
+The Waveshare 7-inch board is a display and touch gadget with no built-in
+microphone or speaker. Tap the screen to confirm pairing in the Muse app.
+The backlight has an on/off switch rather than dimming control. Its BOOT key
+shares GPIO0 with the RGB panel, so it is reserved for entering the bootloader
+and is not a Muse input while the display runs.
+
+The Waveshare 1.28-inch board is also display and touch only: no microphone,
+no speaker, and no button wired to Muse. Tap the screen to confirm pairing.
+Its ESP32-S3R2 has 2 MB of PSRAM, so unlike the 8 MB boards its code runs
+from flash rather than PSRAM. Its console is on a CH343P bridge (UART0), not
+the chip's own USB.
+
+The SenseCAP Indicator's sensors hang off its RP2040, which passes the
+readings to the ESP32-S3. The D1S and D1Pro have CO2 and tVOC sensors built
+in, and temperature and humidity come from the Grove AHT20 in the box (plug it
+in). Muse reads them all at once with `sensors.read`. This needs Seeed's stock
+RP2040 firmware.
+
+The reTerminal E1001 uses black and white for its status screen and standard
+image commands. The panel keeps its picture without power. It shows a still
+status screen (the agent's name, the character and a line of status text) that
+changes only when the status does, since each refresh takes a second or two.
+Standard images are dithered to black and white and refresh once they are all in, with a
+brief black-and-white flash. `display.draw_url` tells Muse the bit depth.
+
+Both reTerminals report calibrated battery voltage (`battery_mv`) and an
+estimated charge percentage (`battery_pct`) through `device.health`, independently
+of the SHT4x sensor setting. Charging and USB-power state remain unavailable
+(`null`). Battery fields also stay `null` if ADC calibration or a reading fails.
+The percentage is inferred from cell voltage and varies with load and charging;
+it is not a fuel-gauge measurement. This does not add sleep or power-saving behavior.
+
+For four gray levels on the E1001, use `display.draw_gray4_url`. It takes the
+same `url` and optional `row` as `display.draw_url` and refreshes the full panel.
+
+The reTerminal E1002 is the same board with a six-colour E Ink Spectra 6
+panel: black, white, yellow, red, blue and green, 4 bits per pixel. It shows
+the same status screen, with the character in colour. Images from Muse are
+dithered to those six inks on the device (grays to black and white only),
+and each refresh takes about 30 seconds and flashes. `display.draw_url` tells
+Muse the six exact colours, the resolution and how slow it is.
+
+The reTerminal E1003 uses an IT8951 controller and an ED103TC2 panel.
+Use `display.draw_gray16_url` for a full refresh with 16 gray levels. It also
+takes the same `url` and optional `row` as `display.draw_url`.
+Its status screen and standard image commands use full-screen monochrome
+refreshes at 1872×1404. Use the green button to confirm pairing. The CH340K USB bridge
+is used for flashing, and the battery voltage and estimated percentage
+are available through `device.health`.
+
+The Waveshare ESP32-S3-ePaper-1.54G has push-to-talk on BOOT once it is
+paired, through its ES8311 codec, microphone and speaker. Its green LED shows
+the turn, since the e-paper is too slow for it: steady while you talk,
+blinking while the agent works on the reply. Once the reply's text is in,
+its first page shows on the e-paper in GNU Unifont's 8x16 letters (Latin
+with its accents, Greek, Cyrillic, Armenian and Georgian), with "1/3" and so
+on at the bottom right when there are more, until the next turn; the Muse app
+has all of it. BOOT keeps its setup role while voice is not connected and
+while a pairing waits for confirmation.
+
+On the Waveshare ESP32-S3-ePaper-1.54G, hold PWR for a second to turn the
+screen a quarter turn clockwise, status and images alike. The board keeps the
+turn across restarts. With voice on, a short press of PWR shows the last
+reply's next page, or the page an image from Muse covered, and both beep. The
+press that switches the board on from the battery doesn't count. A change that
+leaves most of the screen alone, such as the status line, refreshes only a
+window round it, so the rest doesn't flash; it takes as long as a full
+refresh.
+
+Both reTerminals have an SHT4x temperature and humidity sensor on board,
+which Muse reads with `sensors.read`. The board warms the sensor a little, so
+the temperature is corrected by `CONFIG_HOMEHUB_RETERMINAL_SHT4X_TEMP_OFFSET`
+(in tenths of a degree, -3.3 °C by default).
+
+The Waveshare ESP32-S3-ePaper-1.54G has an SHTC3 temperature and humidity
+sensor on board, which Muse reads with `sensors.read` too. Its temperature is
+corrected by `CONFIG_HOMEHUB_WAVESHARE_154G_SHTC3_TEMP_OFFSET` (-4 °C by
+default, as in Waveshare's example).
+
+The experimental reTerminal Sticky Muse profile follows Seeed's `factory_fw`
+source: SSD1677 panel, GPIO45/46 power latch, GT911 touch (I2C0), PDM mic,
+BQ27220 battery gauge and SD card on the panel's SPI2 bus. Its UI is Muse's
+e-ink layer (`components/muse/eink/`, `CONFIG_MUSE_UI_FREEINK`) rather than
+LVGL: [FreeInk](https://github.com/Free-Ink/freeink-sdk) drives the panel from
+its `sticky` profile, and the layer draws the face, Settings and FreeInk's
+keyboard in black on white. Short pulses settle changed pixels across frames,
+with a full cleanup every 120 changed frames and on page changes, images and
+sleep; images show in four grays. Asleep, the panel keeps its last picture at
+no power. Progress is a bar along the bottom edge, as on Muse's square panels.
+The AI button starts a voice note and confirms pairing; touch swipes to
+Settings and confirms pairing too. Up/Down only wake the screen. There is no
+speaker: replies are text on screen. Text uses the LVGL UI's fonts, drawn from
+their TTFs, and Muse's CJK caption font for Chinese, Japanese and Korean.
+The microSD slot is off by default (`CONFIG_MUSE_STICKY_SD`):
+turned on, an inserted card is mounted at `/sdcard` without formatting, though
+nothing reads it yet. The SHT40 on
+I2C1 answers `sensors.read` with an uncalibrated 0 °C temperature offset.
+The profile uses 16 MB of the physical 32 MB flash. Muse's battery sleep and
+Wi-Fi nap are enabled, but the touch and SD rails remain powered: standby
+behaviour is not factory-equivalent. Settings Power off releases the power
+latch only when USB is disconnected. On one unit, the e-ink UI was checked
+for pairing, voice turns and replies, the mic during replies, swiping and
+navigating Settings, the keyboard, sleep and wake, and fast refreshes. With the
+earlier LVGL UI, SHT40 readings, battery percentage/voltage, voice-note
+delivery and Chinese replies were checked; the contributor additionally
+confirms FAT SD mount/removal/reinsertion, charging-state indication,
+battery-only Power off and restart, Muse OTA and measurement of standby
+current. The numeric current value and measurement conditions will be
+recorded when supplied.
+Back up factory firmware and any device-specific data before flashing.
+
+The optional `reterminal-sticky-link` profile uses the same SSD1677 and SHT40
+for a Link-only status screen with four-level grayscale images. It has no Muse
+settings, touch, microphone, battery gauge or SD mounting. Its separate build
+directory and overlay must not be reused for the full UI. On one unit, the
+Link status screen's orientation, black/white polarity and idle stability,
+SHT40 readings and Wi-Fi/VM connection were checked. The contributor also
+confirms four-level grayscale image delivery and Link pairing. Link OTA was
+not separately confirmed. Switching between the two profiles with
+a full flash writes different partition layouts and can lose saved settings or
+pairing data; back up the device before switching.
+
+The SenseCAP Watcher's wheel opens the latest reply on its first turn; further
+turns move backward or forward through the reply's pages. The page counter
+shows the current position. A short click sleeps or wakes the screen, and
+holding the wheel for 300 ms starts push-to-talk. A pairing confirmation still
+uses a normal click. Reviewing uses the larger text layout and holds the
+selected page while automatic reply playback finishes. The latest reply stays
+in RAM until the next turn's reply replaces it or the board restarts; up to
+32 KB of reply text is retained. Automatic captions still show the first 1 KB
+of each message, as on other boards. Sleeping closes the review. With Muse's
+own voice session turned off (`CONFIG_MUSE_HATCH`), replies come over Home
+Link's session and review keeps the first 1 KB of each. With live calls
+(`CONFIG_MUSE_REALTIME_VOICE`), letting go within 300 ms of push-to-talk
+starting starts a call, as a tap does on other boards.
+
+The SenseCAP Watcher keeps its factory data (the identity SenseCraft uses) in
+an `nvsfactory` partition at `0x9000`, where Muse puts its partition table and
+NVS. It's unique to each Watcher, so back it up before you flash Muse the first
+time. To return to Seeed's firmware, flash it and then write the backup back:
+
+```sh
+tools/muse/paced_esptool.py --chip esp32s3 -p PORT read-flash 0x9000 0x32000 nvsfactory.bin
+tools/muse/paced_esptool.py --chip esp32s3 -p PORT write-flash 0x9000 nvsfactory.bin
+```
+
+The Watcher's CH342 USB bridge corrupts reads at 921600 baud and above, so
+these use esptool's default of 115200. It also drops bytes when a whole packet
+arrives at once, so plain esptool can't upload its stub or write flash
+(`0107: Checksum error`, `0105: The format of the received message is
+invalid`). `tools/muse/paced_esptool.py` takes esptool's arguments and sends 64
+bytes at a time at the line rate; `tools/muse/board.sh flash watcher` uses it.
+
+On battery with the screen off and voice resting, the Watcher cuts the LCD
+rail, suspends both codecs and the speaker amp, and lets the ESP32-S3
+light-sleep with its CPU powered down until the wheel or an expander input
+wakes it. CPU power-down saves about 0.44 mA of a 2.96 mA rest. Its retention
+memory, about 15 KB of internal RAM, is taken at boot and kept, and comes from
+the avatar's and audio's static buffers, which this profile keeps in PSRAM
+(`CONFIG_MUSE_STATIC_BUFFERS_IN_PSRAM`). `tools/muse/power.py` shows the last
+run on battery, with the time actually slept, the power locks that kept the
+chip awake (`muse_awake` is Muse itself, whenever it isn't resting), and
+internal RAM: free, lowest since boot, lowest while resting, what's left of
+the RAM retention memory can use, and whether the CPU powers down. The
+retention memory is already out of all of these, so resting shows no dip of
+its own: its lowest is the headroom Wi-Fi, BLE and the tunnel had while the
+board rested. The heartbeat log (`link.heartbeat`) prints the same as
+`int=free/largest min=lowest ret=free/largest cpu_pd=on|off`.
+
+The M5Stack StickS3 has 8 MB of flash, so it uses its own partition table with
+two smaller app slots. The front button is push-to-talk and the side button
+steps through the menu, as on the AIPI. Powering off from Muse turns off the
+screen, speaker and codec and puts the ESP32-S3 in deep sleep; either button
+wakes it. Double-click the power button for a full power-off, and click it to
+turn back on. Muse turns off the power chip's green LED, which would otherwise
+stay lit. While Muse answers, the reply fills the screen in place of the
+avatar, as on the AIPI; **Text size** in the menu picks Extra small to
+Extra large. The IMU, IR and Grove port aren't used yet.
+[M5Unified](https://github.com/m5stack/M5Unified) is M5Stack's reference
+driver for the power chip and peripherals.
+
+M5Stack ships the StickS3 with UiFlow2, which hands the ESP32-S3's USB to its
+own driver and switches off the chip's USB serial port, so esptool can't find
+it. The power chip drives the boot pin (GPIO0), so there's no BOOT button
+either. To flash Muse the first time, put UiFlow2 in USB mode, open its REPL
+(for example with `mpremote repl`) and paste:
+
+```python
+import machine; m = machine.mem32
+m[0x600C001C] = m[0x600C001C] | (1 << 10)                 # USB serial clock on
+m[0x600C0024] = m[0x600C0024] & ~(1 << 10)                # and out of reset
+m[0x60038018] = 0x4200                                    # its pads on
+m[0x60008120] = (m[0x60008120] | (1 << 20)) & ~(1 << 19)  # give it the USB pins
+```
+
+The REPL stops answering. Unplug the USB cable and plug it back in (the
+battery keeps the stick running), and it shows up as a USB JTAG/serial port.
+Anything that resets the stick now boots UiFlow2 again, so pass
+`--after no-reset` to esptool until Muse is on. Back up the flash, then flash
+Muse:
+
+```sh
+python -m esptool --chip esp32s3 -p PORT --after no-reset read-flash 0 0x800000 sticks3.bin
+tools/muse/board.sh flash sticks3 PORT
+```
+
+Muse keeps the USB serial port on, so later flashes need none of this. To go
+back to UiFlow2, write the backup:
+
+```sh
+python -m esptool --chip esp32s3 -p PORT write-flash 0 sticks3.bin
+```
+
+The M5Stack StopWatch has the same CO5300 round AMOLED as the Waveshare S3
+1.75C, with a CST820 touch controller and the StickS3's ES8311 audio. With USB
+at the bottom, **blue top-right is PTT/pairing confirmation**, **yellow
+top-left toggles speaker on/off**, and **red bottom-left is POWER**. Builds with
+live calls (`CONFIG_MUSE_REALTIME_VOICE`) swap the two rim keys and their
+icons: yellow talks (and confirms pairing), and blue toggles the speaker and,
+during a call, hangs up. A short
+POWER press sleeps/wakes the screen; a 1.5 s hold while awake shows goodbye
+and shuts down the M5PM1 (click red to power back on). A waking press is
+consumed, not interpreted as another action. Hardware double-click power-off
+and download access remain available; Muse disables single-click reset, as
+the factory does, and extends the PMIC long delay to 4 s. Settings are one
+swipe left from Muse. Icon-only physical hints (microphone, speaker/mute and
+power) stay beside the rim on the face, reply and pairing views, but are hidden
+in settings so they don't cover controls. Speaker/mute follows the saved
+speaker setting; the microphone brightens while recording. The green PMIC
+power LED is off on battery and on with USB power, updated at boot and with
+the normal battery readings (including while the screen sleeps). This changes
+only M5PM1 `PWR_CFG` (`0x06`) bit 4, preserving charging and the power rails.
+M5's IO expander (M5IOE1) switches the panel and touch resets, audio power
+and the amp; its power chip (M5PM1) reads the battery, charger and red key's
+live state (register `0x48`, bit 0). Asleep on battery, the OLED's rail
+(3V3_L3B) and the audio rail (AU_L3B: codec and mic) are off and the chip
+light-sleeps until a rim key, or the M5PM1's click interrupt on GPIO12, wakes
+it. The red key's click arrives once it's released (about 125 ms later), and a
+press held at rest is found within a second, also while Wi-Fi naps. Waking,
+the panel takes about half a second longer to come back, and the first
+recording after a rest starts about 0.1 s later while the codec is set up
+again. The IMU is put back in suspend at boot; it, the RTC, vibration motor
+and Grove port aren't used yet.
+[M5Unified](https://github.com/m5stack/M5Unified),
+M5's [factory firmware](https://github.com/m5stack/M5StopWatch-UserDemo)
+and its [M5PM1 1.0.6 driver](https://github.com/m5stack/M5PM1/tree/1.0.6)
+are the references. It enumerates as the chip's own USB serial port, so
+flashing needs nothing special: `tools/muse/board.sh flash stopwatch`.
+
+Bench builds also accept `>ui=settings` and `>ui=face` for touch-tile
+screenshots (`a/s` only navigate non-touch menus). `>face=boot`, `idle`,
+`listening`, `thinking`, `speaking`, `error` or `off` selects the face state;
+`>speaker=0` / `>speaker=1` exercises both speaker indications. For privacy-safe
+unpaired captures, `>ui.demo=1` shows `MuseGadget-DEMO` instead of the hardware
+name; `>ui.demo=0` restores it. This changes only the screen, not BLE identity,
+pairing, Wi-Fi or tokens.
+
+The Seeed XIAO ESP32-S3 1.47 Touch Display has a 172×320 JD9853A LCD, AXS5106L
+touch and a PDM mic. **USR1 is push-to-talk and pairing confirmation, USR2
+sleeps and wakes the screen.** It has a microphone and no speaker, so replies
+are read on screen. The IMU, MicroSD slot and battery input aren't used, and
+OTA is off. Pairing, push-to-talk, touch settings, screen sleep and power off
+were checked on one unit. Its [setup guide](seeed-xiao-s3-147.md) has the pins.
+
+The M5Stack CoreS3 runs on Espressif's
+[BSP](https://github.com/espressif/esp-bsp/tree/master/bsp/m5stack_core_s3),
+which brings up its ILI9342C LCD, FT6336U touch, AW88298 amp and ES7210
+microphones and switches the AXP2101's rails for each of them. It has no user
+button: PWR on the left side is push-to-talk and pairing confirmation, read
+from the AXP2101's key interrupts, and settings are on the touch screen (swipe
+left from Muse). RST on the bottom edge restarts the board, and holding it for
+3 s enters the bootloader. Powering off from Muse switches the AXP2101 off;
+click PWR to turn it back on. While Muse is running, holding PWR is a talk and
+never powers the board off: Muse turns off the AXP2101's power-off hold for as
+long as PWR is down. If the firmware has stopped, holding PWR for 10 s still
+cuts the power, unless it stopped during a PWR talk; RST always restarts it.
+Its 1 W speaker is quiet, so the volume starts at 100%. The camera, proximity
+sensor, IMU, RTC, SD card and Grove ports aren't used yet. It enumerates as the
+chip's own USB serial port: `tools/muse/board.sh flash cores3`. If esptool
+can't connect, hold RST for 3 s, until the green LED lights, to enter the
+bootloader.
+
+The M5Stack CoreS3 Lite (K128-Lite) is the CoreS3 without the camera,
+proximity sensor, IMU, RTC and SD slot, with a 200 mAh battery in a slimmer
+case. It runs on the same BSP and board code with its own name and overlay:
+everything Muse uses is the same part on the same pins, and M5Unified drives
+it as a CoreS3 too. Units after M5Stack's 2026-08 product change carry the
+ILI9342E panel, which the BSP detects as board version 2. Boot, display,
+touch and the battery gauge were checked on one unit; the rest is inherited
+from the CoreS3 and unverified: `tools/muse/board.sh flash cores3lite`.
+
+The M5Stack StickC Plus2 runs the full UI on a classic ESP32, as does the Core2
+below. It has
+8 MB of flash and 2 MB of PSRAM, so it uses the 8 MB partition table too. The
+front button is push-to-talk and the side button steps through the menu. The
+power button wakes the screen, and holding it for 2 s powers off. There's no
+power chip: the power button switches the stick on and the ESP32 keeps it on
+(GPIO4). Powering off lets go of that, which cuts the power on battery. On
+USB the stick stays powered, so the ESP32 also goes into deep sleep, and the
+front or power button wakes it. Muse speaks through a small passive buzzer,
+so replies are quiet. The battery shows its voltage, but the stick can't tell
+Muse whether it's on USB or charging. The IMU, IR, RTC and Grove port aren't
+used yet. [M5Unified](https://github.com/m5stack/M5Unified) and
+[M5GFX](https://github.com/m5stack/M5GFX) are M5Stack's reference drivers
+for the pins and peripherals.
+
+The Plus2's console is a CH9102 USB-UART bridge, which drops out above
+230400 baud, so `tools/muse/board.sh flash plus2` uses 230400. It comes with
+M5Stack's factory firmware. Back up the flash before you flash Muse for the
+first time:
+
+```sh
+python -m esptool --chip esp32 -p PORT -b 230400 read-flash 0 0x800000 plus2.bin
+```
+
+To go back, write the backup with `write-flash 0 plus2.bin`, using the same
+chip, port and baud.
+
+## ESP32-S3-DevKitC-1
+
+The [S3 DevKitC-1 overlay](sdkconfig.espressif-s3-devkitc-1) defaults to
+GPIO38 for genuine Espressif v1.1 boards. GPIO48 was verified on an Aideepen
+ESP32-S3 N16R8 DevKitC-1 clone. For this clone, set
+`CONFIG_HOMEHUB_LED_STRIP_GPIO=48` in the build directory's `sdkconfig`
+and then rebuild and flash.
+
+In the hardware check, a standalone WS2812 blink sketch blinked blue three
+times on GPIO48 and produced no light on GPIO38. With the override, Muse
+Gadget breathed orange while advertising. Serial logged
+`LED status ready: addressable RGB (GPIO=48)` and heartbeats with
+`ble=advertising`, with no panic.
+
+## M5Stack Core2 port
+
+Core2 v1.0 (AXP192 PMU), using Espressif's `m5stack_core_2` BSP.
+The 2.0" touch LCD shows the avatar UI: hold the middle bottom touch zone (M5's BtnB) to talk, navigate
+the rest on screen. Holding PWR would cut the power in hardware past about
+4 s, so the side power button is aux instead: tap to sleep or wake, and
+hold for a clean shutdown on the PMU long-press event. Pairing presses are
+confirmed by tapping the touch zone.
+Settings, battery telemetry, images and the home-network tunnel all work.
+Menu power-off shuts down through the PMU, and PWR turns the board back on.
+Core2 v1.1 uses the AXP2101 PMU and is not supported by this port; the board's
+back sticker or PCB identifies the revision. The IMU, RTC, vibration motor
+and SD slot aren't used yet. [M5Unified](https://github.com/m5stack/M5Unified)
+and [M5GFX](https://github.com/m5stack/M5GFX) are M5Stack's reference drivers
+for the pins and peripherals, and the display, touch and speaker setup follows
+Espressif's [BSP](https://github.com/espressif/esp-bsp/tree/master/bsp/m5stack_core_2).
+
+The console is a CP2104 or CH9102F USB-UART bridge (early units the former,
+later ones the latter), so `tools/muse/board.sh flash core2` uses 230400
+baud, which both take. Back up the flash before you flash Muse for the first
+time:
+
+```sh
+python -m esptool --chip esp32 -p PORT -b 230400 read-flash 0 0x1000000 core2.bin
+```
+
+To go back, write the backup with `write-flash 0 core2.bin`, using the same
+chip, port and baud.
+
+## Guition JC3248W535
+
+The JC3248W535 (sold as JC3248W535C_I_Y and JC3248W535EN) is a 3.5" 320×480
+IPS panel on an AXS15231B, driven over QSPI, with the controller's own
+capacitive touch on I2C. In QSPI mode the AXS15231B ignores the row address,
+so a write can only start at the top of the screen or carry on from the last
+one: the board renders LVGL in direct mode into one full-screen buffer in
+PSRAM and sends every frame whole. The panel's init sequence is the one
+Arduino_GFX uses for this board.
+
+It has an NS4168 I2S amp with a JST 1.25 connector for a 4-8 Ω speaker, but no
+microphone. Push-to-talk records silence until you add one and pick it as
+`CONFIG_MUSE_JC3248W535_MIC` under **Muse** in `menuconfig`:
+
+- **PDM**, such as an MP34DT01 or MP34DT05 module, on the 4-pin extension
+  connector: CLK to GPIO17, DATA to GPIO18, SEL to GND, and the connector's
+  3.3 V and GND. This needs no soldering on the board. The speaker moves to
+  I2S1, since only I2S0 converts PDM.
+- **I2S**, such as an INMP441, on the speaker's clocks: SCK to GPIO42 and WS
+  to GPIO2 (shared with the amp), L/R to GND, VDD to 3.3 V, and SD to a free
+  GPIO, set as `CONFIG_MUSE_JC3248W535_MIC_GPIO`. GPIO42 and GPIO2 aren't on
+  a connector.
+
+BOOT is the only button: push-to-talk, pairing confirmation, and waking the
+screen. It's on the back, so the on-screen mic in the lower right is a talk
+button too: hold it to talk and let go to send, and tap the screen to confirm
+pairing. Power off puts the chip in deep sleep until BOOT is pressed; there's
+no battery gauge.
+
+It enumerates as the chip's own USB serial port. Back up the stock firmware
+before flashing Muse for the first time, and restore it with
+`write-flash 0 jc3248w535.bin`:
+
+```sh
+python -m esptool --chip esp32s3 -p PORT read-flash 0 0x1000000 jc3248w535.bin
+tools/muse/board.sh flash jc3248w535 PORT
+```
+
+## Waveshare ESP32-C6-Touch-AMOLED-2.06
+
+Use the `c6-206` profile for this watch; `c6` remains the 1.8-inch board.
+The 2.06-inch model has different display/touch wiring, an ES7210 with two
+microphones, and an AXP2101 power chip. PWR edges are read from the PMU;
+BOOT (GPIO9) is
+push-to-talk and pairing confirmation. Tap PWR to turn the screen off or
+wake it, and hold it for 1.5 seconds to power off.
+
+```sh
+tools/muse/board.sh build c6-206
+tools/muse/board.sh flash c6-206 /dev/cu.usbmodemXXXX
+```
+
+Set your SDK token in `build-muse-waveshare-c6-206/sdkconfig` before building
+(see the main README). The board has 16 MB flash and no PSRAM, so it uses
+Link's session for voice notes with text replies. Images, the home-network
+tunnel, and spoken replies are not supported by this profile. The IMU and RTC
+are not exposed by this port. Battery life and suspend behavior need on-device
+measurement; this profile does not add automatic light sleep.
+
+The v2.0.0 vendor BSP takes its draw-buffer height from Kconfig rather than
+`bsp_display_cfg_t`. The overlay uses 8 lines instead of the 100-line default
+and selects I2S0, the C6's only I2S peripheral. Keep these settings when
+updating the BSP.
+
+Before treating a build as hardware-validated, check cold boot and reboot,
+all touch edges, BOOT/PWR press and release, BLE pairing, Wi-Fi reconnect,
+several push-to-talk/text reply cycles, microphone levels, battery reporting,
+charging, screen-off/wake, and software power-off. USB builds and host tests
+alone cannot verify these behaviors.
+
+## Waveshare ESP32-S3-Touch-LCD-3.5
+
+A 3.5" 320×480 ST7796 panel over SPI (run landscape as 480×320), an FT6336
+capacitive touch, an ES8311 codec for speaker and mic, an AXP2101 PMIC and a
+TCA9554 I/O expander. The PMIC's codec and panel rails are off at boot until
+the firmware programs them (both builds do), and the LCD's chip-select and
+reset sit on the expander's P0/P1, so the panel doesn't exist until both chips
+are up. The
+touch reports in the panel's portrait frame and is polled over the shared
+I2C bus — it has no interrupt or reset line — with coordinates mirrored into
+landscape and clamped at the edges, where it can report one past the last
+row. The two LVGL draw buffers live in PSRAM: in internal RAM their ~60 KB
+is what the I2S DMA descriptors also need, and the codec then fails to
+start. The panel IO sends them straight from PSRAM (`psram_dma_direct`),
+which ESP-IDF v6.0.3 no longer does unasked.
+
+BOOT on GPIO0 is the only button: push-to-talk, pairing confirmation and
+waking the screen. Power-off is a deep sleep woken by BOOT. The touchscreen
+taps Muse's face and swipes left to the settings tile. The AXP2101 reports
+a battery percentage and charge state; the board's camera connector and
+SD-slot headers are unused.
+
+Two builds: `tools/board.sh waveshare-s3-lcd-35` shows Link's status bars,
+and `tools/muse/board.sh build s3lcd35` the full UI. It enumerates as the
+chip's own USB serial port. Back up the stock 16 MB firmware before the
+first flash and keep it outside Git:
+
+```sh
+python -m esptool --chip esp32s3 -p PORT read-flash 0 0x1000000 s3-lcd-35-backup.bin
+tools/muse/board.sh flash s3lcd35 PORT
+```
+
+Restore with `write-flash 0 s3-lcd-35-backup.bin`. Pins and the power-up
+sequence follow xiaozhi-esp32's esp32-s3-touch-lcd-3.5 board and Waveshare's
+schematic.
+
+## Cardputer ADV port
+
+Experimental ADV-only port, tested with ESP-IDF 6.0.1. Supports the display,
+keyboard, BLE/Wi-Fi pairing, voice notes and text replies.
+
+- Hold **Space/GO** to talk. **Esc** opens/closes the menu or goes back;
+  **Enter** selects and confirms pairing.
+- **Up/Down** (`;`/`.`) navigate; **Left/Right** (`,`/`/`) change values,
+  with or without Fn. Typing chat messages is not supported.
+- Menu power-off enters deep sleep; **GO** wakes it. Use the side switch
+  for physical power-off.
+
+Replies may be shortened; use the Muse app for the full conversation.
+Spoken replies, images, the home-network tunnel, battery telemetry and
+extra peripherals (SD, IMU, IR, expansion) are not supported.
+
+Set your SDK token in `build-muse-m5stack-cardputer-adv/sdkconfig` (ignored
+by Git). Build with `tools/muse/board.sh build cardputer-adv` and flash with
+`tools/muse/board.sh flash cardputer-adv PORT`. To enter download mode,
+switch off, hold GO while connecting USB, then release GO.
+
+Back up the original 8 MB firmware before flashing; keep it outside Git:
+
+```sh
+python -m esptool --chip esp32s3 -p PORT read-flash 0 0x800000 cardputer-adv-backup.bin
+```
+
+Restore with `write-flash 0 cardputer-adv-backup.bin`. Pair in Muse under
+Settings > Devices > Developer mode > Add Device, then press Enter.
+
+## Espressif ESP-Mosaico (experimental)
+
+ESP32-S31 (two RISC-V cores at 320 MHz, 16 MB PSRAM), a square 480×480
+CO5300 AMOLED with CST9217 touch, an ES8311 codec, a BQ27220 fuel gauge, and
+the AI (talk, top edge) and BOOT (aux, bottom edge, left of USB-C) buttons.
+`components/muse/boards/board_esp_mosaico.c` drives the parts itself, with
+pins from Espressif's BSP; it tells board revisions v1.0 and v1.2 apart by
+eFuse. Run on a v1.2 board: display, touch, buttons, audio, battery and
+installs through Vibe Mode. Muse's progress shows as a bar along the bottom
+edge (`no_ring`): the panel is square.
+
+- **ESP-IDF:** the S31 isn't in v6.0.3. Use the master revision Espressif
+  pins for the board, `7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe`, installed
+  for `esp32s31`; `tools/muse/board.sh` looks for it in
+  `~/.espressif/esp-idf-s31` (or set `IDF_EXPORT_S31` to its `export.sh`).
+- **Espressif's tools:** they come in two generations, one per Vibe Mode
+  version, and each talks only to boards of its own (0.2's refuse 0.1 boards:
+  `esp-mosaico-vibe-mode/docs/migration-0.2.md` in their utils). Clone
+  [esp-mosaico-vibe](https://github.com/esp-mosaico/esp-mosaico-vibe) at tag
+  `v26.0.3` for Vibe Mode 0.2 or `v26.0.2` for 0.1, and init its
+  `submodule/esp-mosaico-utils` (default `~/mosaico/esp-mosaico-vibe`, or set
+  `MOSAICO_UTILS` to the utils checkout). In Vibe Mode, the matching tools'
+  `mosaico.py iris device-status` reports `product_contract`
+  (`esp-mosaico/v2` for 0.2). The build adds its ESP-Iris and app-side recovery
+  components (`components_mosaico/`, `devices/sdkconfig.muse-esp-mosaico-iris`).
+  A 0.2 checkout (it has `esp-mosaico-vibe-mode/`) adds
+  `devices/sdkconfig.muse-esp-mosaico-vibe2` on top and builds in
+  `build-muse-esp-mosaico-vibe2/`.
+- **Layout:** the first 2 MB is the board's retained layout, with Espressif's
+  Vibe Mode firmware in `factory`; `partitions_mosaico.csv` keeps it and puts
+  `nvs` at 2 MB and the app in `ota_0` after it. Vibe Mode 0.2 sits in
+  `vibe_mode` (app/test) and installs into `main_app`:
+  `partitions_mosaico_vibe2.csv`, whose header says which of its offsets Vibe
+  Mode depends on. Never flash with esptool or
+  `idf.py flash`: they write the app over Vibe Mode.
+- **Install:** `tools/muse/board.sh build mosaico` also makes an ESP-Iris
+  System Update bundle, and `tools/muse/board.sh flash mosaico` installs it
+  with Espressif's `mosaico.py iris system-update` (from the esp-mosaico-vibe
+  workspace, where it links this directory in as the application project
+  `projects/muse_gadget`: its Gateway works per project).
+  The USB-C port is the S31's high-speed USB: it shows up only while ESP-Iris
+  runs, in Vibe Mode or in a Muse build. Espressif's demo firmware doesn't
+  run it, so the first time, power the board on holding **AI** to start Vibe
+  Mode. Boards whose demo (Claw) is 0.4.0 or older have no Vibe Mode:
+  install Espressif's current firmware over the cable first, with their web
+  flasher
+  ([mosaico.ai/en/firmware](https://mosaico.ai/en/firmware)) or
+  `mosaico.py recover`, both in ROM download mode (hold BOOT, briefly press
+  POWER). The board then has Vibe Mode 0.2 or later and needs the 0.2 tools.
+  Muse builds then answer ESP-Iris and aren't signed (a signed app can't hand
+  over to Vibe Mode, whose image it checks against our key), so later
+  installs need no buttons.
+- **Video from a phone:** `MUSE_VIDEO=1 tools/muse/board.sh build|flash
+  mosaico` builds in `build-muse-esp-mosaico-video/` (`-video-vibe2/` for
+  Vibe Mode 0.2) with
+  `devices/sdkconfig.muse-video`: the phone camera or a clip over Wi-Fi
+  (`../protocols/VIDEO.md`), up to 480 px shown one to one, as two bands
+  decoded at once, one per core. Join Wi-Fi from the board's settings, or for
+  a bench set `CONFIG_HOMEHUB_WIFI_SSID` and `CONFIG_HOMEHUB_WIFI_PASSWORD` in
+  that directory's `sdkconfig`. Run on a v1.2 board: it joins Wi-Fi beside BLE
+  setup, announces `_musevideo._tcp`, and plays 480 px two-band H.264 at
+  29-30 fps.
+- **Camera:** `MUSE_CAMERA=1 tools/muse/board.sh build|flash mosaico` builds
+  in `build-muse-esp-mosaico-camera/` (`-camera-vibe2/` for Vibe Mode 0.2)
+  with `devices/sdkconfig.muse-esp-mosaico-camera`, for Espressif's
+  [Camera Module](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s31/esp-mosaico/user_guide_camera.html)
+  in the left expansion slot (an OV3640 on module v1.2, an SC101IOT on
+  v1.4). `camera.capture` takes one frame, turns it upright and returns a
+  JPEG of at most 150 KB. While it does, the screen wakes and shows TAKING A
+  PHOTO. On an SC101IOT the module's flash fires when the
+  sensor's auto exposure value reaches 1300 (288 in a lit room and 1398
+  with the lens covered, on that module). The camera's D2 and flash
+  lines are the S31's USB Serial/JTAG pins, so that port on the expansion
+  header is off once the module is found. Run on a v1.2 board with a v1.4
+  (SC101IOT) module: a 720×1280 JPEG of 80 to 135 KB in about 1.7 s, 2.4 s
+  with the flash; text on a card in the frame reads in full. The OV3640 and
+  a v1.0 board were only built.
+
+## Waveshare ESP32-S3-Touch-AMOLED-2.16
+
+The 2.16 port uses Waveshare's BSP for the square 480×480 CO5300 AMOLED, the
+CST9220 touch controller and the ES8311/ES7210 audio codecs. Its three buttons
+are on the top edge: KEY3 (right) is push-to-talk and pairing confirmation, PWR
+(middle) talks too, and BOOT (left) is the aux button; settings use the
+touchscreen. The IMU, RTC and TF card are not
+integrated.
+
+See [2.16 setup](waveshare-s3-216.md) for pins, the factory firmware backup,
+and the hardware verification checklist.
+
+## Waveshare ESP32-S3-Touch-AMOLED-2.06
+
+The S3 version of the 2.06-inch watch. Unlike the C6 version it has PSRAM, so
+it runs the full UI: its own voice session, images and the home-network
+tunnel. It uses Waveshare's BSP for the 410×502 CO5300 AMOLED,
+the FT3168 touch controller and the ES8311/ES7210 codecs, and draws the way
+the 2.16 does. BOOT (upper right) is push-to-talk and pairing confirmation;
+PWR (lower right) is the aux button. The motor, IMU, RTC and TF card are not
+integrated.
+
+See [S3 2.06 setup](waveshare-s3-206.md) for pins, the factory firmware backup,
+and the hardware verification checklist.
+
+## AI Passport port
+
+Experimental port of FoloToy's ESP32-C3 wearable, tested with ESP-IDF 6.0.1.
+Supports the display, buttons, BLE/Wi-Fi pairing, voice notes, text replies
+(with `CONFIG_MUSE_CJK_FONT` for Chinese, Japanese and Korean) and the
+battery gauge.
+
+- The three buttons on the right edge share one ADC ladder on GPIO0. Hold
+  **OK** (the bottom one) to talk; it also confirms pairing. **DOWN** opens
+  the menu and moves down it; **UP** moves up.
+- Menu power-off enters deep sleep; any button wakes it.
+
+The C3 has about 400 KB of SRAM shared between code and heap, and no PSRAM.
+The overlay moves driver code out of IRAM and trims the BLE, Wi-Fi, TCP and
+LVGL buffers so the UI, the Link session and a voice note fit together; the
+session uses 12 KB inbound frames where the Cardputer ADV uses 17 KB. A reply
+frame bigger than that shows "REPLY TOO LONG: SEE MUSE APP" and the session
+reconnects. Replies may be shortened; use the Muse app for the full
+conversation. Spoken replies,
+images, the home-network tunnel, OTA and the charging state are not supported.
+
+Set your SDK token in `build-muse-ai-passport/sdkconfig` (ignored by Git).
+Build with `tools/muse/board.sh build ai-passport` and flash with
+`tools/muse/board.sh flash ai-passport PORT`. The stock firmware's NVS layout
+differs, so erase the flash first (`idf.py -p PORT erase-flash`) or the
+firmware won't start. Back up the original 8 MB firmware before that; keep it
+outside Git:
+
+```sh
+python -m esptool --chip esp32c3 -p PORT read-flash 0 0x800000 ai-passport-backup.bin
+```
+
+Restore with `write-flash 0 ai-passport-backup.bin`. Pair in Muse under
+Settings > Devices > Developer mode > Add Device, then press OK.
+
+## ESP32-S3-BOX-3
+
+The BOX-3 port uses Espressif’s BSP for the LCD/touch hardware revisions and
+the ES8311/ES7210 audio codecs. BOOT/CONFIG is push-to-talk and pairing
+confirmation; settings use the touchscreen. The capacitive home button, dock
+sensors, SD card, IR, and battery telemetry are not integrated. Power off
+enters deep sleep; BOOT/CONFIG or RESET wakes the unit.
+
+See [BOX-3 setup](esp32-s3-box-3.md) for PowerShell build and flash commands,
+token setup, and the hardware verification checklist.
+
+## ALIENTEK ATK-DNESP32S3-BOX
+
+The V1.1 box drives its ST7789 over an 8-bit i80 bus and one ES8311 for both
+the speaker and its single mic, without a vendor BSP; an XL9555 expander holds
+the backlight, the speaker amplifier and the K1 and K2 keys. K0 (BOOT) is
+push-to-talk and pairing confirmation, K1 opens and steps the menu, and K2 is
+unused. There's no touch and no battery reading. The pins follow
+xiaozhi-esp32's board and were checked on a unit; this isn't the BOX0, BOX2 or
+BOX3, which use other pins.
+
+See [ATK-DNESP32S3-BOX setup](atk-dnesp32s3-box.md) for flashing and the
+hardware verification checklist.
+
+## ALIENTEK ATK-DNESP32S3-BOX2
+
+The BOX2 (Wi-Fi) runs its 240×320 ST7789 as 320×240 landscape, and an SC7A20
+accelerometer turns the picture over with the box. An ES8389 does the speaker
+and mic, and a 16-bit XL9555 holds the power latch, the amplifier, the charger
+lines and keys L, M and Q; R is GPIO0 (BOOT). M is push-to-talk, R the menu,
+L the speaker and Q power. The pins follow xiaozhi-esp32's board; it runs on
+one unit, with battery use still to check.
+
+See [ATK-DNESP32S3-BOX2 setup](atk-dnesp32s3-box2.md) for flashing, the
+options and what is still to check.
+
+## OSTB EchoEar-2ST
+
+Experimental port for the measured 16 MB / 8 MB unit. Hold the screen
+microphone to talk and release it to send; press the screen when the Muse app
+requests pairing confirmation. The bottom button controls physical power.
+Firmware power-off is unsupported; battery telemetry, IMU and SD are unverified.
+See [EchoEar setup](ostb-echoear-2st.md) for pins, builds and validation limits.
+
+## VIEWE SmartRing-Plus
+
+The SmartRing-Plus runs the full UI on a 360×360 round ST77916 with CST816
+touch, one ES8311 for the speaker and its single mic, and a battery gauge
+(V1: GPIO1 ADC, V2: AXP2101). BOOT (GPIO0) is inside the case, so the mic
+at the bottom centre of the screen is the talk button: hold it to talk and
+let go to send. Tap the screen when the Muse app asks you to confirm pairing.
+The screen keeps reading touch while it is dark, so a tap wakes it; the
+board skips the light-sleep display pause that would need a reachable button.
+Muse doesn't use the BSP's GPIO47 soft power-off, which hasn't been checked
+with this port: turn the board off with its switch.
+
+The board file drives the panel, touch and battery itself, following VIEWE's
+BSP, `viewesmart/smartring_plus` 1.1.2, without depending on it. See
+[SmartRing-Plus setup](viewe-smartring-plus.md).
+
+## Build
+
+From the `esp32` directory, load `sdkconfig.defaults` first and then the
+board's overlays, in order:
+
+| Board | Target | Overlays after `sdkconfig.defaults` | Build |
+|---|---|---|---|
+| ESP32-C5 DevKitC-1 | `esp32c5` | none | `idf.py build` |
+| ESP32-C6 devkit without PSRAM | `esp32c6` | [`devices/sdkconfig.c6-nopsram`](sdkconfig.c6-nopsram) | `tools/board.sh c6-nopsram build` |
+| ESP32-S3-DevKitC-1 | `esp32s3` | [`devices/sdkconfig.espressif-s3-devkitc-1`](sdkconfig.espressif-s3-devkitc-1) | `tools/board.sh espressif-s3-devkitc-1 build` |
+| ideaspark ESP32 | `esp32` | [`devices/sdkconfig.ideaspark`](sdkconfig.ideaspark) | `tools/board.sh ideaspark build` |
+| Waveshare C6 LCD 1.47 | `esp32c6` | [`devices/sdkconfig.waveshare-c6-lcd-147`](sdkconfig.waveshare-c6-lcd-147) | `tools/board.sh waveshare-c6-lcd-147 build` |
+| ESP32-2432S028 CYD | `esp32` | [`devices/sdkconfig.esp32-2432s028`](sdkconfig.esp32-2432s028) | `tools/board.sh esp32-2432s028 build` |
+| ESP32-C3 with 0.42" OLED | `esp32c3` | [`devices/sdkconfig.c3-oled-042`](sdkconfig.c3-oled-042) | `tools/board.sh c3-oled-042 build` |
+| M5Stack CoreMatrix | `esp32c61` | [`devices/sdkconfig.m5stack-corematrix`](sdkconfig.m5stack-corematrix) | `tools/board.sh m5stack-corematrix build` |
+| Seeed SenseCAP Indicator | `esp32s3` | [`devices/sdkconfig.sensecap-indicator`](sdkconfig.sensecap-indicator) | `tools/board.sh sensecap-indicator build` |
+| Waveshare S3 ePaper 1.54 | `esp32s3` | [`devices/sdkconfig.waveshare-s3-epaper-154`](sdkconfig.waveshare-s3-epaper-154) | `tools/board.sh waveshare-s3-epaper-154 build` |
+| Waveshare S3 e-Paper 1.54G | `esp32s3` | [`devices/sdkconfig.waveshare-s3-epaper-154g`](sdkconfig.waveshare-s3-epaper-154g) | `tools/board.sh waveshare-s3-epaper-154g build` |
+| Seeed reTerminal E1001 | `esp32s3` | [`devices/sdkconfig.reterminal-e1001`](sdkconfig.reterminal-e1001) | `tools/board.sh reterminal-e1001 build` |
+| Seeed reTerminal E1002 | `esp32s3` | [`devices/sdkconfig.reterminal-e1002`](sdkconfig.reterminal-e1002) | `tools/board.sh reterminal-e1002 build` |
+| Seeed reTerminal E1003 | `esp32s3` | [`devices/sdkconfig.reterminal-e1003`](sdkconfig.reterminal-e1003) | `tools/board.sh reterminal-e1003 build` |
+| Seeed reTerminal Sticky (experimental) | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.reterminal-sticky`](sdkconfig.reterminal-sticky) | `tools/board.sh reterminal-sticky build` |
+| Seeed reTerminal Sticky Link status (experimental) | `esp32s3` | [`devices/sdkconfig.reterminal-sticky-link`](sdkconfig.reterminal-sticky-link) | `tools/board.sh reterminal-sticky-link build` |
+| Home Assistant Voice PE | `esp32s3` | [`devices/sdkconfig.home-assistant-voice`](sdkconfig.home-assistant-voice) | `tools/board.sh home-assistant-voice build` |
+| Seeed reSpeaker Lite (experimental) | `esp32s3` | [`devices/sdkconfig.seeed-respeaker-lite`](sdkconfig.seeed-respeaker-lite) | `tools/board.sh seeed-respeaker-lite build` |
+| Seeed reSpeaker XVF3800 (experimental) | `esp32s3` | [`devices/sdkconfig.seeed-respeaker-xvf3800`](sdkconfig.seeed-respeaker-xvf3800) | `tools/board.sh seeed-respeaker-xvf3800 build` |
+| Waveshare S3 1.75C | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-175c`](sdkconfig.muse-waveshare-s3-175c) | by hand |
+| Waveshare S3 1.75 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-175`](sdkconfig.muse-waveshare-s3-175) | by hand |
+| Waveshare S3 1.85B | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-185b`](sdkconfig.muse-waveshare-s3-185b) | `tools/muse/board.sh build 185b` |
+| Waveshare S3 1.85C | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-185c`](sdkconfig.muse-waveshare-s3-185c) | `tools/muse/board.sh build 185c` |
+| Waveshare S3 2.16 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-216`](sdkconfig.muse-waveshare-s3-216) | `tools/muse/board.sh build s3-216` |
+| Waveshare S3 1.46 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-146`](sdkconfig.muse-waveshare-s3-146) | `tools/muse/board.sh build 146` |
+| Waveshare S3 1.43 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-143`](sdkconfig.muse-waveshare-s3-143) | `tools/muse/board.sh build 143` |
+| LilyGO 1.75 AMOLED | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-lilygo-s3-amoled-175`](sdkconfig.muse-lilygo-s3-amoled-175) | `tools/muse/board.sh build lilygo175` |
+| Espressif ESP-Mosaico (experimental) | `esp32s31` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-esp-mosaico`](sdkconfig.muse-esp-mosaico), [`devices/sdkconfig.muse-esp-mosaico-iris`](sdkconfig.muse-esp-mosaico-iris); video adds [`devices/sdkconfig.muse-video`](sdkconfig.muse-video), the camera [`devices/sdkconfig.muse-esp-mosaico-camera`](sdkconfig.muse-esp-mosaico-camera) | `tools/muse/board.sh build mosaico`; video: `MUSE_VIDEO=1 tools/muse/board.sh build mosaico`; camera: `MUSE_CAMERA=1 tools/muse/board.sh build mosaico` |
+| Waveshare S3 2.06 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-206`](sdkconfig.muse-waveshare-s3-206) | `tools/muse/board.sh build s3-206` |
+| Waveshare S3 1.43C | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-143c`](sdkconfig.muse-waveshare-s3-143c) | `tools/muse/board.sh build 143c` |
+| OSTB EchoEar-2ST (experimental) | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-ostb-echoear-2st`](sdkconfig.muse-ostb-echoear-2st) | `tools/muse/board.sh build echoear` |
+| Espressif ESP32-S3-BOX-3 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-espressif-box-3`](sdkconfig.muse-espressif-box-3) | `tools/muse/board.sh build box3` |
+| ALIENTEK ATK-DNESP32S3-BOX | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-atk-dnesp32s3-box`](sdkconfig.muse-atk-dnesp32s3-box) | `tools/muse/board.sh build atk-box` |
+| ALIENTEK ATK-DNESP32S3-BOX2 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-atk-dnesp32s3-box2`](sdkconfig.muse-atk-dnesp32s3-box2) | `tools/muse/board.sh build atk-box2` |
+| AIPI Lite | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-aipi`](sdkconfig.muse-aipi) | by hand |
+| Waveshare C6 1.8 | `esp32c6` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-c6-18`](sdkconfig.muse-waveshare-c6-18) | by hand |
+| Waveshare S3 1.8 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-18`](sdkconfig.muse-waveshare-s3-18) | `tools/muse/board.sh build s3-18` |
+| Waveshare C6 2.06 | `esp32c6` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-c6-206`](sdkconfig.muse-waveshare-c6-206) | `tools/muse/board.sh build c6-206` |
+| SenseCAP Watcher | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-sensecap-watcher`](sdkconfig.muse-sensecap-watcher) | by hand |
+| M5Stack Cardputer ADV | `esp32s3` | `devices/sdkconfig.muse;devices/sdkconfig.muse-m5stack-cardputer-adv` | `tools/muse/board.sh build cardputer-adv` |
+| M5Stack AtomS3 + Atomic Voice Base (experimental) | `esp32s3` | `devices/sdkconfig.muse;devices/sdkconfig.muse-m5stack-atoms3` | `tools/muse/board.sh build atoms3` |
+| M5Stack StickS3 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-m5stack-sticks3`](sdkconfig.muse-m5stack-sticks3) | by hand |
+| Elecrow CrowPanel Advance 4.3 V1.3 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-crowpanel-advance-43`](sdkconfig.muse-crowpanel-advance-43) | `tools/muse/board.sh build crowpanel-43` |
+| M5Stack StopWatch | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-m5stack-stopwatch`](sdkconfig.muse-m5stack-stopwatch) | by hand |
+| M5Stack TriviaPOD (experimental) | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-m5stack-triviapod`](sdkconfig.muse-m5stack-triviapod) | `tools/muse/board.sh build triviapod` |
+| Seeed XIAO ESP32-S3 1.47 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-seeed-xiao-s3-147`](sdkconfig.muse-seeed-xiao-s3-147) | `tools/muse/board.sh build xiao147` |
+| M5Stack CoreS3 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-m5stack-cores3`](sdkconfig.muse-m5stack-cores3) | `tools/muse/board.sh build cores3` |
+| M5Stack CoreS3 Lite | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-m5stack-cores3lite`](sdkconfig.muse-m5stack-cores3lite) | `tools/muse/board.sh build cores3lite` |
+| Guition JC3248W535 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-guition-jc3248w535`](sdkconfig.muse-guition-jc3248w535) | `tools/muse/board.sh build jc3248w535` |
+| Waveshare ESP32-S3-Touch-LCD-7 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-lcd7`](sdkconfig.muse-waveshare-s3-lcd7) | `tools/muse/board.sh build lcd7` |
+| Waveshare ESP32-S3-Touch-LCD-1.28 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-lcd128`](sdkconfig.muse-waveshare-s3-lcd128) | `tools/muse/board.sh build lcd128` |
+| Waveshare ESP32-S3-Touch-LCD-3.49 V2 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-lcd349`](sdkconfig.muse-waveshare-s3-lcd349) | `tools/muse/board.sh build lcd349` |
+| Waveshare ESP32-P4-WIFI6-Touch-LCD-3.5 | `esp32p4` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-p4-lcd35`](sdkconfig.muse-waveshare-p4-lcd35) | `tools/muse/board.sh build p4lcd35` |
+| SpotPear ESP32-AI-1.28 v1.0 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-spotpear-esp32-ai-128`](sdkconfig.muse-spotpear-esp32-ai-128) | `tools/muse/board.sh build spotpear` |
+| Waveshare S3 LCD 3.5 status screen | `esp32s3` | [`devices/sdkconfig.waveshare-s3-lcd-35`](sdkconfig.waveshare-s3-lcd-35) | `tools/board.sh waveshare-s3-lcd-35 build` |
+| Waveshare S3 LCD 3.5 (UI) | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-lcd-35`](sdkconfig.muse-waveshare-s3-lcd-35) | `tools/muse/board.sh build s3lcd35` |
+| M5Stack StickC Plus2 | `esp32` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-m5stack-stickc-plus2`](sdkconfig.muse-m5stack-stickc-plus2) | by hand |
+| M5Stack Core2 | `esp32` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-m5stack-core2`](sdkconfig.muse-m5stack-core2) | `tools/muse/board.sh build core2` |
+| Freenove FNK0104B | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-fnk0104b`](sdkconfig.muse-fnk0104b) | `tools/muse/board.sh build fnk0104b` |
+| VN ESP32-S3 1.83-inch NV3023 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-vn-s3-183`](sdkconfig.muse-vn-s3-183) | `tools/muse/board.sh build vn183` |
+| FoloToy AI Passport | `esp32c3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-ai-passport`](sdkconfig.muse-ai-passport) | `tools/muse/board.sh build ai-passport` |
+| Deotaland RoRoLee | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-deotaland-rorolee`](sdkconfig.muse-deotaland-rorolee) | `tools/muse/board.sh build rorolee` |
+| VIEWE SmartRing-Plus | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-viewe-smartring-plus`](sdkconfig.muse-viewe-smartring-plus) | `tools/muse/board.sh build smartring-plus` |
+| Waveshare ESP32-S3-Touch-LCD-1.9 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-waveshare-s3-lcd19`](sdkconfig.muse-waveshare-s3-lcd19) | `tools/muse/board.sh build lcd19` |
+| DFRobot UNIHIKER K10 | `esp32s3` | [`devices/sdkconfig.muse`](sdkconfig.muse), [`devices/sdkconfig.muse-dfrobot-unihiker-k10`](sdkconfig.muse-dfrobot-unihiker-k10) | `tools/muse/board.sh build k10` |
+
+`tools/board.sh BOARD [build|flash|monitor|flash-monitor] [PORT]` builds each
+board in its own `build-<board>` directory. For the boards with the full UI, run `idf.py`
+with the target and overlays from the table:
+
+```sh
+idf.py -B build-muse-aipi -DIDF_TARGET=esp32s3 \
+  -DSDKCONFIG=build-muse-aipi/sdkconfig \
+  -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;devices/sdkconfig.muse;devices/sdkconfig.muse-aipi" build
+```
+
+For the optional My Muse avatar source (full-UI boards with PSRAM), add
+[`devices/sdkconfig.muse-avatar-sync`](sdkconfig.muse-avatar-sync) after the
+board's overlays, then
+[`devices/sdkconfig.muse-avatar-animations`](sdkconfig.muse-avatar-animations)
+for its experimental phone clips (ESP32-S3 only). See
+[avatar sources](../docs/avatar-sources.md).
+
+To flash, add `-p PORT flash` with the same arguments. Boards with the full UI need 16 MB
+of flash or more, except the StickS3, StickC Plus2, Cardputer ADV, AtomS3, AI Passport and Waveshare 1.43C, whose overlays switch
+to the 8 MB layout in [`partitions_muse_8mb.csv`](../partitions_muse_8mb.csv).
+[`AGENTS.md`](../AGENTS.md) covers flashing, monitoring, and what to do when a
+build picks up stale settings.
+
+## Waveshare ESP32-S3-Touch-AMOLED-1.75C motion controls
+
+The 1.75C overlay includes `CONFIG_MUSE_MOTION_GESTURES`. In Settings >
+Auto-sleep, **Lift to wake** and **Face-down quiet** are separate, saved
+opt-ins, both off initially. Lift to wake detects a tilt toward a viewing
+position from rest, confirmed by two fresh samples at least 40 ms apart
+(polling can add latency). It also works from a face-up resting pose;
+there is no required face-down or upright step. It wakes the screen without
+starting a recording. Tilting back toward a face-up resting position cancels
+the pending pickup. Normalized, filtered gravity supplies tilt direction;
+two samples of an upward starting impulse also wake a readable device.
+That upward motion's braking phase is not treated as a new put-down.
+Single-sample impacts do not establish an upward start. Replayed physical
+pickup, landing and repickup cycles cover the reported missed/late-wake cases.
+A downward starting impulse suppresses wake through landing. It re-arms after
+600 ms of stable acceleration and rebases to that resting orientation;
+contact or continued movement restarts that settling window.
+Face-down quiet temporarily silences playback after a settled face-down pose;
+turning it back restores the saved speaker preference. It does not cancel a
+call, recording or reply, or disconnect the microphone.
+
+The driver reuses the BSP's I2C bus and the QMI8658 at 0x6b, using the
+accelerometer at low-power 21 Hz with the gyroscope disabled. Sampling is
+20 Hz with Lift to wake enabled, including while asleep; quiet-only uses
+10 Hz awake and 4 Hz asleep. The higher polling rate favors responsiveness
+over standby battery life. This is not interrupt-only wake and does not work
+after Settings > Power off. An I2C
+failure or a second without fresh samples disables gestures and clears the
+temporary mute. Turn both controls off and back on to retry.
+
+The USB console command `>motion` reports activity, pose, screen sleep, wake
+count, pickup-to-detection time (`detect_ms`, excluding panel wake) and
+acceleration in milli-g. `>motion.lift=1` and `>motion.quiet=1` enable the saved settings;
+use `0` to disable them (these setup commands also work over BLE).
+The expected reading is about +1000 mg Z face up and -1000 mg face
+down. The register reference is the vendor's
+[SensorLib driver](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.75C/blob/9b295b1/examples/arduino/libraries/SensorLib/src/SensorQMI8658.hpp).
+
+Validation: ESP-IDF 6.0.3 builds with the feature on and off, and 212 related
+host tests, including sanitized classifier, runtime, I2C driver and playback
+checks. On one physical 1.75C, flashing preserved pairing and Link reconnected;
+sensor activation/deactivation worked, and Lift to wake remained enabled
+after reflashing. A live pickup woke the screen with 51 ms of detector
+confirmation (excluding panel wake); the user confirmed the response felt
+prompt. Recorded physical pickup/put-down traces pass replay tests. In a
+subsequent live full-cycle trial, the screen stayed asleep during lowering
+and table contact, then woke promptly on the next pickup; its detector
+reported 51 ms confirmation. Repeated physical face-down/face-up transitions
+muted and resumed a local test clip while preserving the saved speaker and
+volume settings. Battery impact and longer-term false-trigger rates have
+not been measured.
+Other Waveshare models do not enable these controls.
+
+## Waveshare ESP32-S3-Touch-AMOLED-1.43C
+
+Waveshare's small 1.43-inch round AMOLED puck on the ESP32-S3-PICO-1-N8R8
+(SH8601 driver here instead of the 1.75C's CO5300). BOOT is the only
+button: push-to-talk, pairing confirmation, and waking the screen; a
+finger held on the face tile talks too, like the 1.85C. The panel runs
+on espressif/esp_lcd_sh8601 with Waveshare's own init table; touch is
+the vendor's raw register protocol (read 0x02, then 0x03), both axes
+mirrored. One I2S bus carries the ES8311 speaker DAC and the ES7210
+mics; the speaker amp is on GPIO46 and the codecs' LDO on GPIO18.
+Battery is the vendor demo's divider on GPIO4 with the charge pin on
+GPIO7; no PMU, so Settings' power off deep-sleeps and BOOT wakes it.
+
+Set your SDK token in `build-muse-waveshare-s3-143c/sdkconfig` before
+building (see the main README). Build and flash with
+`tools/muse/board.sh build|flash 143c`.
+
+Flashed on hardware (2026-10-17): Link heartbeats with BLE advertising,
+`>status` answers on the console and no panics. Touch coordinates, the
+ES7210 mics and the battery gauge still need on-device checks.
+
+## Waveshare ESP32-S3-Touch-LCD-1.85C
+
+The 1.85C is a 1.85" 360x360 round LCD (ST77916, QSPI) with CST816 capacitive
+touch, an ES8311 speaker codec and an ES7210 microphone ADC sharing one I2S
+bus, and a 200K/100K battery divider on GPIO8. It runs the full avatar UI:
+hold a finger on the face tile to talk, BOOT for push-to-talk and
+pairing confirmation, settings on the touchscreen.
+
+It enumerates as the chip's own USB Serial/JTAG port; there's no USB bridge:
+
+```
+tools/muse/board.sh build 185c
+tools/muse/board.sh flash 185c
+```
+
+Back up the original 16 MB firmware before flashing Muse the first time, and
+keep the backup outside Git:
+
+```
+python -m esptool --chip esp32s3 -p PORT -b 460800 read-flash 0 0x1000000 waveshare-s3-185c-backup.bin
+```
+
+Restore with `write-flash 0 waveshare-s3-185c-backup.bin`, using the same
+chip, port and baud.
+
+## Waveshare ESP32-S3-Touch-AMOLED-1.43
+
+The 1.43 (the plain one, not the 1.43C) is a 1.43" 466×466 round AMOLED
+(SH8601/CO5300, QSPI) with FT3168 capacitive touch, a QMI8658 IMU and a
+PCF85063 RTC, and no speaker or microphone: Muse's replies are text on
+screen. BOOT confirms pairing (a tap on the screen does too), settings on
+the touchscreen. The battery divider is read on GPIO4, not yet confirmed
+against a cell, so Muse reports its voltage but no percentage.
+
+It enumerates as the chip's own USB Serial/JTAG port; there's no USB bridge:
+
+```
+tools/muse/board.sh build 143
+tools/muse/board.sh flash 143
+```
+
+Back up the original 16 MB firmware before flashing Muse the first time, and
+keep the backup outside Git:
+
+```
+python -m esptool --chip esp32s3 -p PORT -b 460800 read-flash 0 0x1000000 waveshare-s3-143-backup.bin
+```
+
+Restore with `write-flash 0 waveshare-s3-143-backup.bin`, using the same
+chip, port and baud.
+
+## LilyGO T-Display-S3 AMOLED 1.75
+
+LilyGO's H741-01: a 1.75" 466×466 round AMOLED (CO5300, QSPI, panel
+H0175Y003AM) with CST9217 capacitive touch, an SY6970 charger and a PCF8563
+RTC on the shared I2C bus, and no speaker or microphone: Muse's replies are
+text on screen. BOOT confirms pairing (a tap on the screen does too),
+settings on the touchscreen. The SY6970's own ADC reports the battery
+voltage and the real charging state over I2C; menu power-off opens the
+charger's BATFET, a true off on battery (plug in USB to turn it back on;
+BOOT doesn't), and on USB deep-sleeps with BOOT as the wake button while
+the battery keeps charging. The panel is driven like the Waveshare
+AMOLED-1.43 (banded flush, even-aligned windows, brightness over 0x51); the
+CST9217 reports both axes inverted, which the touch driver's mirror flags
+undo. Pins follow LilyGO's `pin_config.h` for the H0175Y003AM screen.
+
+It enumerates as the chip's own USB Serial/JTAG port; there's no USB bridge:
+
+```
+tools/muse/board.sh build lilygo175
+tools/muse/board.sh flash lilygo175
+```
+
+Back up the original 16 MB firmware before flashing Muse the first time, and
+keep the backup outside Git:
+
+```
+python -m esptool --chip esp32s3 -p PORT -b 460800 read-flash 0 0x1000000 lilygo-s3-amoled-175-backup.bin
+```
+
+Restore with `write-flash 0 lilygo-s3-amoled-175-backup.bin`, using the same
+chip, port and baud.
+
+## Waveshare ESP32-S3-Touch-LCD-1.46
+
+The 1.46 is a 1.46" 412x412 round LCD whose SPD2010 controller (QSPI) also
+scans the capacitive touch, with a PCM5101 speaker DAC and an I2S microphone
+on buses of their own. It runs the full avatar UI: hold a finger on the face
+tile to talk, BOOT for push-to-talk and pairing confirmation, settings on the
+touchscreen. PWR switches it on from a battery, sleeps and wakes the screen,
+and turns it back on after Power off in Settings; the firmware holds the
+battery latch (GPIO7) and reads the battery voltage on GPIO8. The battery and
+PWR handling are build-checked only, not yet tried on a unit.
+
+The 1.46B and 1.46C are the same board with cover glass (Waveshare covers all
+three on one wiki page and in one repo), so they use this profile.
+
+It enumerates as the chip's own USB Serial/JTAG port; there's no USB bridge:
+
+```
+tools/muse/board.sh build 146
+tools/muse/board.sh flash 146
+```
+
+Back up the original 16 MB firmware before flashing Muse the first time, and
+keep the backup outside Git:
+
+```
+python -m esptool --chip esp32s3 -p PORT -b 460800 read-flash 0 0x1000000 waveshare-s3-146-backup.bin
+```
+
+Restore with `write-flash 0 waveshare-s3-146-backup.bin`, using the same
+chip, port and baud.
+
+## Add a board
+
+1. Copy the closest overlay here as `sdkconfig.<yourboard>`.
+2. Set at least `CONFIG_IDF_TARGET`, `CONFIG_HOMEHUB_BUTTON_GPIO`, the status
+   backend (`CONFIG_HOMEHUB_LED_BACKEND_*`), and the flash size and mode.
+3. Without PSRAM, also turn off `CONFIG_SPIRAM` and `CONFIG_HOMEHUB_TUNNEL` and
+   keep mbedtls in internal memory, as [`sdkconfig.ideaspark`](sdkconfig.ideaspark)
+   does.
+4. Build with `SDKCONFIG_DEFAULTS="sdkconfig.defaults;devices/sdkconfig.<yourboard>"`
+   and add your board to the tables above.
+
+A board with a new kind of display, or one that runs the UI, needs code
+as well. [`AGENTS.md`](AGENTS.md) walks through every kind of board, from the
+overlay to testing on hardware.
+
+Got it working on something new? Share it in the
+[Muse Gadgets Discord](https://discord.gg/3bhjCkZdd6).
+
+### Watcher camera
+
+Camera support is disabled by default. In the Watcher build's `menuconfig`,
+under **Muse**, enable **SenseCAP Watcher camera capture and live preview**
+(`CONFIG_MUSE_WATCHER_CAMERA=y`) and rebuild. It requires PSRAM. Disabled
+builds omit the camera worker, shutter UI, double-click gesture, and
+`camera.capture` command.
+
+Double-click the wheel to open a live camera view. Aim the Watcher, then tap
+**TAP TO TAKE PHOTO** or double-click the wheel again. The captured frame stays
+on screen. Tap the image to return to the avatar.
+With camera support enabled, a single click waits 350 ms before sleeping so
+that a double-click can open the camera without starting a voice note.
+
+The `camera.capture` command returns a JPEG in
+`payload.data_base64`, with `payload.format` set to `jpeg-base64`. During live
+preview it returns the latest frame. Otherwise it requests a fresh frame.
+Capture runs asynchronously and reports initialization, timeout, or busy errors.
+The camera uses the existing Himax firmware. It's powered only while a capture
+or the live view runs (a capture takes under a second, start-up included), and
+nothing polls it in between.
+
+Camera builds also add **Photo with voice notes** to Settings > Sound
+(`CONFIG_MUSE_PHOTO_NOTES`), off until you turn it on. Then holding the wheel
+to talk also takes a photo (with the live view open, its frame, and the view
+closes): the screen shows TAKING A PHOTO, then PHOTO TAKEN (or NO PHOTO)
+beside the note's length, and the photo goes to Muse after the note's audio,
+in the same message, so you can ask about what the Watcher sees. Only your own
+hold takes one this way: not a wake word note, and not a note saved to send
+later, which goes without it. The photo isn't kept once it has gone up. If the
+camera isn't done within 3 s of letting go, the note goes without it, and a
+press while the photo uploads cancels the note, as during recording.
+
+## reSpeaker Lite setup (experimental)
+
+See [seeed-respeaker-lite.md](seeed-respeaker-lite.md) for the XMOS firmware requirement, build commands and controls.
+
+## reSpeaker XVF3800 setup (experimental)
+
+See the [XVF3800 guide](seeed-respeaker-xvf3800.md) for the XIAO-only SKU,
+exact 16 kHz I2S-slave firmware baseline, app-led setup and controls. It has
+no Muse status LED.
+
+## VN ESP32-S3 1.83-inch NV3023
+
+A Vietnamese ESP32-S3R8 board with the Xingzhi Cube's 1.83" 284×240 NV3023
+LCD, an ES8311 for the speaker and an ES7210 for the mics. It ships with
+xiaozhi firmware, where it's `xiaozhi-ai-iot-vietnam-1st`. Pins, the panel's
+init sequence and the battery levels follow that xiaozhi port
+in [TienHuyIoT/xiaozhi-esp32_vietnam](https://github.com/TienHuyIoT/xiaozhi-esp32_vietnam)
+(`main/boards/xiaozhi-ai-iot-vietnam-1st/`). BOOT is push-to-talk, Vol+
+opens the menu and moves down it, Vol- moves up it (or back to the list from a
+page), and BOOT selects. There's no touch, so set
+it up over BLE. The battery shows as a percentage from the port's table, and
+the charge pin (GPIO47) says when it's charging.
+
+The mic is the ES7210's first channel (`mic_slot` 0); its second carries the
+speaker reference that xiaozhi uses for echo cancelling. Power off is deep
+sleep, and BOOT wakes it.
+
+Its overlay turns on `CONFIG_MUSE_LATIN_FONT`, so captions show Vietnamese
+with its tones, a line of GNU Unifont's 8x16 at a time, and
+`CONFIG_MUSE_UI_LANG_VI`, so the state label and the firmware's own captions
+are in Vietnamese ("SẴN SÀNG", "Không kết nối được Muse"), as are the button
+menu and the pairing card. The serial console stays in English.
+
+Coming from other firmware, erase the flash once before the first flash
+(`idf.py -p PORT erase-flash`): Muse's NVS and `prod_data` partitions sit where
+other firmware keeps its own data.
+
+## Deotaland RoRoLee
+
+The Deotaland RoRoLee (RRL-01) is an ESP32-S3 with 16 MB of flash and 8 MB of
+octal PSRAM, a 120×240 SH8501 AMOLED, an ES8311 for the speaker, an ES7210 for
+the microphone and a BQ27220 battery gauge. It's held in landscape, but the
+SH8501 can't exchange rows and columns, so the UI draws 240×120 and the board
+turns that onto a portrait copy of the screen, which goes to the panel whole
+after each refresh, as Deotaland's own firmware sends it. The panel gets its
+maker's short init sequence; power and gamma come from the panel's OTP.
+
+BOOT is push-to-talk and pairing confirmation; VOL- opens the menu and moves
+down it, VOL+ moves up it, and BOOT selects. There's no touch, so set it up
+over BLE. Replies are mostly Chinese, so the overlay turns on
+`CONFIG_MUSE_CJK_FONT`. The battery shows the gauge's charge and voltage.
+Powering off from Muse cuts the rail that feeds the screen, audio and gauge
+and puts the ESP32-S3 in deep sleep. Only BOOT wakes it: the volume buttons
+aren't on RTC pins. The vibration motor, SD card slot and 32 kHz crystal
+aren't used yet. It enumerates as the chip's own USB serial port:
+`tools/muse/board.sh flash rorolee`.
+
+It ships with Deotaland's firmware. Back up the flash, then erase it once
+before the first flash: Muse's NVS and `prod_data` partitions sit where that
+firmware keeps its own data.
+
+```sh
+python -m esptool --chip esp32s3 -p PORT read-flash 0 0x1000000 rorolee.bin
+idf.py -p PORT erase-flash
+```
+
+To go back, write the backup with `write-flash 0 rorolee.bin`.

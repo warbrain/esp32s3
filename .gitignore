@@ -35,6 +35,7 @@ sdkconfig.old
 # resources), e.g. 3rd_party/native/source/external/sentencepiece.
 *.md
 !voice/3rd_party/**/*.md
+!/firmware/muse/**/*.md
 /docs/
 
 # IDE / OS

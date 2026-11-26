@@ -1,0 +1,192 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Drives the serial console's "@chat" encoder and line unescaper (muse_chat_text.c)
+ * for test_muse_serial_chat.py, which parses the result the way tools/muse/chat.py does.
+ *   console    stdin is a reply's text: prints the lines a typed turn sends for it
+ *   unescape   stdin is console lines: prints each unescaped, as "<length>:<bytes>"
+ *   caption C  stdin is a reply's text: prints it wrapped to C columns, as the
+ *              screen pages it (test_muse_caption_wrap.py)
+ *   ascii      stdin is a reply's text: prints it with the ASCII stand-ins the
+ *              caption shows (muse_text.c, test_muse_caption_wrap.py)
+ *   latin      the same with CONFIG_MUSE_LATIN_FONT's accented letters kept,
+ *              after "1:" if it has any or "0:"
+ *   markdown   stdin is a reply's text: prints it without its Markdown
+ *              (test_muse_markdown_captions.py)
+ *   page       stdin is a reply's text: prints "cjk" or "latin" for the caption
+ *              font it takes, then for the page it asks for (test_muse_caption_wrap.py)
+ *   emoji      built with CONFIG_MUSE_EMOJI: the caption muse_text_to_caption()
+ *              makes of a reply with CONFIG_MUSE_EMOJI's emoji kept
+ *   emoji-pages  as pages, with the emoji kept and 16 px wide in the fake font */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "muse_chat.h"
+#include "muse_chat_priv.h"
+#include "muse_state.h"
+#include "muse_text.h"
+
+/* Captions page to the screen; the console lines tested here don't. */
+static int s_cols = 16, s_lines = 2;
+static bool s_page_cjk;
+
+void muse_state_page(const char *text, int *cols, int *lines)
+{
+    s_page_cjk = muse_text_has_cjk(text);
+    *cols = s_cols;
+    *lines = s_lines;
+}
+
+/* A proportional font for the pixel-wrapped pages: wide W and M, narrow i, l,
+ * spaces and stops, 16 px emoji, 10 px otherwise, and A pulled 2 px towards a
+ * V after it. */
+static int fake_glyph_px(uint32_t letter, uint32_t next)
+{
+    int w = 10;
+    if (letter == 'W' || letter == 'M') {
+        w = 18;
+    } else if (letter == 'i' || letter == 'l' || letter == ' ' || letter == '.') {
+        w = 4;
+    } else if ((letter >= 0x2300 && letter <= 0x2BFF) || letter >= 0x1F000) {
+        w = 16;   /* an emoji: two of the caption font's cells */
+    } else if (letter >= 0x80) {
+        w = 11;
+    }
+    return w - (letter == 'A' && next == 'V' ? 2 : 0);
+}
+
+static char *read_all(size_t *len)
+{
+    size_t cap = 1 << 16, n = 0;
+    char *buf = malloc(cap + 1);
+    size_t got;
+    while (buf && (got = fread(buf + n, 1, cap - n, stdin)) > 0) {
+        n += got;
+        if (n == cap) {
+            cap *= 2;
+            buf = realloc(buf, cap + 1);
+        }
+    }
+    if (!buf) {
+        exit(2);
+    }
+    buf[n] = '\0';
+    *len = n;
+    return buf;
+}
+
+int main(int argc, char **argv)
+{
+    size_t len;
+    char *in = read_all(&len);
+    if (argc > 1 && !strcmp(argv[1], "console")) {
+        muse_hatch_console("sent", NULL, "\"bytes\":%u", 12u);
+        muse_hatch_console("busy", NULL, "\"on\":%s", "true");
+        muse_hatch_console("text", in, "\"msg\":%d", 0);
+        muse_hatch_console("message_done", NULL, "\"msg\":%d,\"bytes\":%u", 0, (unsigned)strlen(in));
+        muse_hatch_console("text", "", "\"msg\":%d", 1);
+        muse_hatch_console("done", NULL, "\"messages\":%d,\"complete\":true", 2);
+        muse_hatch_console("error", "TOO LONG", NULL);
+    } else if (argc > 1 && !strcmp(argv[1], "unescape")) {
+        for (char *line = in, *end; *line; line = end + 1) {
+            end = strchr(line, '\n');
+            if (!end) {
+                end = line + strlen(line);
+            }
+            char keep = *end;
+            *end = '\0';
+            size_t n = muse_hatch_unescape(line);
+            printf("%zu:", n);
+            fwrite(line, 1, n, stdout);
+            if (!keep) {
+                break;
+            }
+        }
+    } else if (argc > 2 && !strcmp(argv[1], "caption")) {
+        /* One page tall enough for the whole reply: every wrapped line. */
+        s_cols = atoi(argv[2]);
+        s_lines = 1000;
+        static char page[1 << 16];
+        if (muse_hatch_caption_at(in, 0, page, sizeof(page))) {
+            fputs(page, stdout);
+        }
+    } else if (argc > 4 && (!strcmp(argv[1], "pages") || !strcmp(argv[1], "latin-pages") ||
+                            !strcmp(argv[1], "emoji-pages"))) {
+        /* Every page the reply turns through, pixel-wrapped (PX 0: by
+         * characters only), one per offset where it changes, separated by form
+         * feeds. CAP is the page buffer, the voice task's by default.
+         * latin-pages keeps CONFIG_MUSE_LATIN_FONT's accented letters. */
+        if (argv[1][0] == 'l') {
+            muse_text_keep_latin();
+        }
+#if CONFIG_MUSE_EMOJI
+        if (argv[1][0] == 'e') {
+            muse_text_keep_emoji();
+            muse_text_to_caption(in, len + 1);   /* as muse_state.c does before paging */
+            len = strlen(in);
+        }
+#endif
+        s_cols = atoi(argv[2]);
+        muse_chat_set_caption_px(atoi(argv[3]), fake_glyph_px);
+        s_lines = atoi(argv[4]);
+        size_t cap = argc > 5 ? (size_t)atoi(argv[5]) : MUSE_CAPTION_MAX;
+        static char page[1 << 16], last[1 << 16];
+        if (cap > sizeof(page)) {
+            return 2;
+        }
+        for (size_t at = 0; at < len; at++) {
+            if (muse_hatch_caption_at(in, at, page, cap) && strcmp(page, last)) {
+                printf("%s%s", last[0] ? "\f" : "", page);
+                strlcpy(last, page, sizeof(last));
+            }
+        }
+    } else if (argc > 1 && !strcmp(argv[1], "ascii")) {
+        static char shown[1 << 16];
+        strlcpy(shown, in, sizeof(shown));
+        muse_text_to_ascii(shown, sizeof(shown));
+        fputs(shown, stdout);
+    } else if (argc > 1 && !strcmp(argv[1], "latin")) {
+        static char shown[1 << 16];
+        strlcpy(shown, in, sizeof(shown));
+        muse_text_keep_latin();
+        muse_text_to_caption(shown, sizeof(shown));
+        printf("%d:%s", muse_text_has_latin(shown), shown);
+    } else if (argc > 1 && !strcmp(argv[1], "markdown")) {
+        size_t n = muse_text_strip_markdown(in, 0);
+        if (n != strlen(in)) {
+            return 3;
+        }
+        fputs(in, stdout);
+#if CONFIG_MUSE_EMOJI
+    } else if (argc > 1 && !strcmp(argv[1], "emoji")) {
+        static char shown[1 << 16];
+        strlcpy(shown, in, sizeof(shown));
+        muse_text_keep_emoji();
+        muse_text_to_caption(shown, sizeof(shown));
+        fputs(shown, stdout);
+#endif
+    } else if (argc > 1 && !strcmp(argv[1], "page")) {
+        static char page[1 << 16];
+        muse_hatch_caption_at(in, 0, page, sizeof(page));
+        printf("%s %s\n", muse_text_has_cjk(in) ? "cjk" : "latin", s_page_cjk ? "cjk" : "latin");
+    } else {
+        fprintf(stderr, "usage: %s console|unescape|caption COLS|[latin-|emoji-]pages COLS PX LINES [CAP]|ascii|latin|emoji|markdown|page < input\n", argv[0]);
+        return 2;
+    }
+    free(in);
+    return 0;
+}

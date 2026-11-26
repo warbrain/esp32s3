@@ -1,0 +1,149 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "esp_err.h"
+#include "sdkconfig.h"
+#if CONFIG_MUSE_UI_THEME
+#include "muse_theme_policy.h"
+#endif
+#if CONFIG_MUSE_AVATAR_SYNC
+#include "muse_avatar_render.h"
+#endif
+
+/*
+ * User settings, persisted in NVS. Setters save immediately and then notify the
+ * change listener (from the caller's task), which applies the setting to the
+ * hardware. Brightness, auto-sleep and the speaker are polled where they're used,
+ * as is the reply text size, which notifies nothing.
+ */
+
+#define MUSE_SSID_MAX 32
+#define MUSE_PASS_MAX 64
+#define MUSE_HOST_MAX 63
+#define MUSE_VM_MAX 63
+#define MUSE_TOKEN_MAX 1023
+
+#define MUSE_MIC_GAIN_MAX 36      /* dB; ES7210 PGA, applied in 3 dB steps */
+
+typedef enum {
+    MUSE_SETTING_VOLUME,
+    MUSE_SETTING_SPEAKER,
+    MUSE_SETTING_MIC_GAIN,
+    MUSE_SETTING_BRIGHTNESS,
+    MUSE_SETTING_SLEEP,
+    MUSE_SETTING_WIFI,          /* on/off or credentials */
+    MUSE_SETTING_BLE,
+    MUSE_SETTING_HATCH,
+    MUSE_SETTING_VOICE_NOTES,
+#if CONFIG_MUSE_LOCAL_VOICE
+    MUSE_SETTING_AUTO_DICTATION,
+#endif
+#if CONFIG_MUSE_AVATAR_SYNC
+    MUSE_SETTING_AVATAR,
+#endif
+#if CONFIG_MUSE_WAKEWORD_ENABLE
+    MUSE_SETTING_WAKEWORD,      /* the wake word opt-in changed */
+#endif
+} muse_setting_t;
+
+typedef void (*muse_setting_cb_t)(muse_setting_t what);
+
+esp_err_t muse_settings_init(void);
+void muse_settings_set_listener(muse_setting_cb_t cb);
+#if CONFIG_MUSE_AVATAR_SYNC
+muse_avatar_source_t muse_settings_avatar_source(void);
+/* Call from the backend's flash-safe worker, not a UI event handler. */
+esp_err_t muse_settings_set_avatar_source(muse_avatar_source_t source);
+#endif
+
+#if CONFIG_MUSE_UI_THEME
+muse_theme_mode_t muse_settings_theme(void);
+esp_err_t muse_settings_set_theme(muse_theme_mode_t mode);
+#endif
+
+int muse_settings_volume(void);         /* 0..100 */
+bool muse_settings_speaker_on(void);    /* off: replies are shown, not played */
+#if CONFIG_MUSE_LOCAL_VOICE
+bool muse_settings_auto_dictation(void);
+void muse_settings_set_auto_dictation(bool on);
+#endif
+int muse_settings_mic_gain(void);       /* dB, 0..MUSE_MIC_GAIN_MAX */
+int muse_settings_brightness(void);     /* 10..100 */
+int muse_settings_sleep_s(void);        /* 0 = never */
+#if CONFIG_MUSE_MOTION_GESTURES
+bool muse_settings_lift_wake(void);
+bool muse_settings_face_down_quiet(void);
+void muse_settings_set_lift_wake(bool on);
+void muse_settings_set_face_down_quiet(bool on);
+#endif
+/* The size of reply text on screen, from Extra small to Extra large. Until
+ * it's chosen, the screen's own default (muse_settings_set_text_size_default). */
+enum { MUSE_TEXT_XSMALL, MUSE_TEXT_SMALL, MUSE_TEXT_MEDIUM, MUSE_TEXT_LARGE, MUSE_TEXT_XLARGE, MUSE_TEXT_SIZES };
+int muse_settings_text_size(void);
+/* The UI's size for a person who hasn't chosen one: what the screen showed
+ * before the setting existed. Not saved. */
+void muse_settings_set_text_size_default(int size);
+bool muse_settings_wifi_on(void);
+bool muse_settings_ble_on(void);
+/* StopWatch: false selects realtime PTT; true selects voice notes only. */
+bool muse_settings_voice_notes(void);
+void muse_settings_set_voice_notes(bool on);
+#if CONFIG_MUSE_WAKEWORD_ENABLE
+bool muse_settings_wakeword_on(void);   /* hands-free listening opt-in; default off */
+#endif
+/* With CONFIG_MUSE_APP_VIEW, Apps in Settings (off until the person turns
+ * them on): whether the gadget runs the apps their Muse makes. Changing it
+ * restarts the gadget, so Muse learns of the app commands as it reconnects. */
+bool muse_settings_apps_on(void);
+void muse_settings_set_apps_on(bool on);
+#if CONFIG_MUSE_PHOTO_NOTES
+/* Photo with voice notes (muse_photo_note.h); default off. */
+bool muse_settings_photo_notes(void);
+void muse_settings_set_photo_notes(bool on);
+#endif
+
+void muse_settings_wifi(char ssid[MUSE_SSID_MAX + 1], char pass[MUSE_PASS_MAX + 1]);
+void muse_settings_hatch_host(char out[MUSE_HOST_MAX + 1]);
+void muse_settings_hatch_vm(char out[MUSE_VM_MAX + 1]);
+void muse_settings_hatch_token(char out[MUSE_TOKEN_MAX + 1]);
+size_t muse_settings_hatch_token_len(void);
+
+void muse_settings_set_volume(int pct);
+void muse_settings_set_speaker_on(bool on);
+void muse_settings_set_mic_gain(int db);
+void muse_settings_set_brightness(int pct);
+void muse_settings_set_sleep_s(int secs);
+void muse_settings_set_text_size(int size);
+void muse_settings_set_wifi_on(bool on);
+void muse_settings_set_ble_on(bool on);
+#if CONFIG_MUSE_WAKEWORD_ENABLE
+void muse_settings_set_wakeword_on(bool on);
+#endif
+/* A network name is remembered first among the saved ones and joined now;
+ * an empty ssid forgets every saved network. */
+void muse_settings_set_wifi(const char *ssid, const char *pass);
+/* False, changing nothing, for a server this build doesn't allow
+ * (muse_server_hosts.h); empty means the default. */
+bool muse_settings_set_hatch_host(const char *host);
+void muse_settings_set_hatch_vm(const char *vm);
+/* append=true adds to the stored token (for chunked BLE writes). */
+esp_err_t muse_settings_set_hatch_token(const char *token, bool append);

@@ -1,0 +1,373 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import re
+import shlex
+import shutil
+import subprocess
+import tempfile
+import unittest
+
+from test_link_unpair_storage_contract import _function_body
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class LinkEndpointLifecycleTest(unittest.TestCase):
+    def test_endpoint_lifecycle(self) -> None:
+        cc = shlex.split(os.environ.get("CC", "cc"))
+        if not cc or shutil.which(cc[0]) is None:
+            self.skipTest("C compiler not available")
+        app = (ROOT / "main/app.c").read_text()
+        api = (ROOT / "main/vm_api.c").read_text()
+        noise = (ROOT / "main/noise_control.cpp").read_text()
+        provision = _function_body(app, "static void on_provision(")
+        provision = provision.split('config_erase_key("vm_url");', 1)[1]
+        provision = provision.split("if (start_wifi_join_ota_if_requested", 1)[0]
+        boot = _function_body(app, "void app_run(")
+        boot = boot.split('heap_snapshot("after noise_ctrl_init");', 1)[1]
+        boot = boot.split("bool skip_boot_scan", 1)[0]
+
+        # Execute the real setters and application blocks, with only storage,
+        # transport and unrelated boot services replaced by host fakes.
+        production = "\n".join(re.findall(
+            r"^(?:static char s_(?:api_base|noise_host)\[.*|"
+            r"#define NOISE_DEFAULT_HOST .*)$",
+            api + noise, re.MULTILINE,
+        ))
+        for source, signature in (
+            (api, "void vm_api_set_base_url(const char *url)"),
+            (api, "static void make_api_url(char *out, size_t out_cap, const char *path)"),
+            (noise, "void noise_ctrl_set_host(const char *host)"),
+            (app, "static bool save_setup_endpoints(const char *api_url, const char *api_url_v2,\n"
+                  "                                 const char *noise_host)"),
+            (app, "static void setup_disconnect_to_clean(void)"),
+            (app, "static bool setup_wipe_to_clean(setup_reset_scope_t scope)"),
+        ):
+            production += "\n" + signature + " {" + _function_body(source, signature) + "}\n"
+
+        harness = r"""
+#include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "vm_api.h"
+#include "diagnostic_log.h"
+#include "muse_server_hosts.h"
+#define CONFIG_MUSE_ENABLED 0
+#define ESP_LOGW(...) ((void)0)
+#define ESP_LOGE(...) ((void)0)
+#define ESP_OK 0
+#define ESP_OTA_IMG_PENDING_VERIFY 1
+#define esp_ota_get_running_partition() NULL
+#define esp_ota_get_state_partition(p, s) ((void)(p), (void)(s), -1)
+#define esp_ota_mark_app_valid_cancel_rollback() ESP_OK
+#define ota_installed_by_vibe_mode() false
+#define ota_verify_forget() ((void)0)
+#define ESP_LOGI(...) ((void)0)
+#define xTaskCreate(...) ((void)0)
+typedef int esp_partition_t;
+typedef int esp_ota_img_states_t;
+static bool s_ota_pending_verify;
+static char stored[4][256];
+static bool complete, provisioned, booting, checked_setup;
+static const char *fail_key;
+static int failures, disconnects, log_clears, accepts;
+static bool accept_ok = true;
+#if CONFIG_HOMEHUB_CUSTOM_SERVER_HOSTS
+// A development build takes any host setup sends.
+static const char *custom_api = "https://custom-api.example";
+static const char *custom_api_v2 = "https://custom-api-v2.example";
+static const char *custom_noise = "custom-noise.example";
+static const char *next_api_v2 = "https://next-api.example";
+static const char *next_noise = "next-noise.example";
+#else
+// A release build takes only the Muse app's hosts.
+static const char *custom_api = "https://hatch-api.meta.ai";
+static const char *custom_api_v2 = "https://hatch-api.meta.ai";
+static const char *custom_noise = "hatch.metaaivm.com";
+static const char *next_api_v2 = "https://api.muse.ai";
+static const char *next_noise = "hatch.metaaivm.com";
+#endif
+static const char *foreign_api = "https://api.muse.ai.example";
+static const char *foreign_noise = "hatch.metaaivm.com.example";
+
+static int key_index(const char *key) {
+    if (!strcmp(key, "ssid")) return 0;
+    if (!strcmp(key, "api_url")) return 1;
+    if (!strcmp(key, "api_url_v2")) return 3;
+    assert(!strcmp(key, "noise_host"));
+    return 2;
+}
+static bool config_set_str(const char *key, const char *value) {
+    if (fail_key && !strcmp(key, fail_key)) return false;
+    snprintf(stored[key_index(key)], sizeof(stored[0]), "%s", value);
+    return true;
+}
+static bool config_erase_key(const char *key) { return config_set_str(key, ""); }
+static bool config_get_str(const char *key, char *value, size_t cap) {
+    int index = key_index(key);
+    if (booting && index != 0) assert(checked_setup && complete && provisioned);
+    snprintf(value, cap, "%s", stored[index]);
+    return stored[index][0] != '\0';
+}
+static bool config_setup_complete(void) { checked_setup = true; return complete; }
+static bool config_is_provisioned(void) { return provisioned; }
+static bool config_mark_setup_complete(void) { complete = true; return true; }
+static bool config_clear_setup(void) {
+    memset(stored, 0, sizeof(stored));
+    complete = provisioned = false;
+    return true;
+}
+static bool config_clear_pairing(void) {
+    for (int i = 1; i < 4; i++) stored[i][0] = '\0';
+    provisioned = false;
+    return true;
+}
+static bool config_unpair(void) {
+    if (!config_clear_pairing()) return false;
+    complete = false;
+    return true;
+}
+typedef enum { SETUP_RESET_KEEP_WIFI, SETUP_RESET_FORGET_WIFI } setup_reset_scope_t;
+static bool clear_setup_credentials(setup_reset_scope_t scope) {
+    return scope == SETUP_RESET_FORGET_WIFI ? config_clear_setup() : config_unpair();
+}
+#define CONFIG_KEY_NOT_FOUND 0
+static int config_key_lookup(const char *key) {
+    (void)key;
+    return provisioned ? 1 : CONFIG_KEY_NOT_FOUND;
+}
+static void disconnect_vm_transports(void) { disconnects++; }
+void diagnostic_log_clear(void) {
+    assert(disconnects > log_clears);
+    log_clears++;
+}
+static void wifi_mgr_disconnect(void) {}
+static void ui_set_vm(const char *value) { (void)value; }
+static void ui_set_wifi(const char *value) { (void)value; }
+@PRODUCTION@
+static void setup_fail_for_session(const char *stage, const char *status,
+                                   unsigned generation) {
+    assert((!strcmp(stage, "storage") && !strcmp(status, "error_storage"))
+           || (!strcmp(stage, "auth") && !strcmp(status, "auth_failed")));
+    assert(generation == 1);
+    failures++;
+    assert(setup_wipe_to_clean(SETUP_RESET_KEEP_WIFI));
+}
+static bool require_provisioning_pairing_session(unsigned generation) {
+    return generation == 1;
+}
+static void setup_stage_set(const char *stage) { (void)stage; }
+static char before_api[sizeof(s_api_base)], before_noise[sizeof(s_noise_host)];
+static char before_stored[4][256];
+// The setup's hosts aren't saved or used until its credentials are stored, so
+// the device never sends one pairing's tokens to another pairing's hosts.
+static bool accept_pairing_credentials(const char *access_token,
+                                       const char *refresh_token,
+                                       const char *username) {
+    assert(!strcmp(access_token, "access") && !strcmp(refresh_token, "refresh"));
+    assert(!strcmp(username, "user"));
+    assert(!strcmp(s_api_base, before_api) && !strcmp(s_noise_host, before_noise));
+    assert(!memcmp(stored, before_stored, sizeof(stored)));
+    accepts++;
+    if (accept_ok) provisioned = true;
+    return accept_ok;
+}
+static bool apply_endpoints_v2(const char *api_url_v2, const char *api_url,
+                               const char *noise_host) {
+    unsigned session_generation = 1;
+    const char *access_token = "access", *refresh_token = "refresh", *username = "user";
+    memcpy(before_api, s_api_base, sizeof(before_api));
+    memcpy(before_noise, s_noise_host, sizeof(before_noise));
+    memcpy(before_stored, stored, sizeof(stored));
+    @PROVISION@
+    return true;
+done:
+    return false;
+}
+static bool apply_endpoints(const char *api_url, const char *noise_host) {
+    return apply_endpoints_v2(NULL, api_url, noise_host);
+}
+static void boot_endpoints(void) {
+    booting = true;
+    @BOOT@
+    booting = false;
+}
+static void expect_endpoints(const char *api_url, const char *noise_host) {
+    assert(!strcmp(s_api_base, api_url));
+    assert(!strcmp(s_noise_host, noise_host));
+    char url[512], expected[512];
+    make_api_url(url, sizeof(url), "/fetch_vms");
+    snprintf(expected, sizeof(expected), "%s/fetch_vms", api_url);
+    assert(!strcmp(url, expected));
+}
+static void reset_fixture(void) {
+    fail_key = NULL;
+    booting = checked_setup = false;
+    failures = disconnects = log_clears = accepts = 0;
+    accept_ok = true;
+    config_clear_setup();
+    vm_api_set_base_url(NULL);
+    noise_ctrl_set_host(NULL);
+}
+static void check_boot_v2(bool setup, bool token, bool wifi, bool keep_endpoints,
+                          bool with_v2) {
+    reset_fixture();
+    config_set_str("api_url", custom_api);
+    if (with_v2) config_set_str("api_url_v2", custom_api_v2);
+    config_set_str("noise_host", custom_noise);
+    if (wifi) config_set_str("ssid", "saved-wifi");
+    complete = setup;
+    provisioned = token;
+    boot_endpoints();
+    const char *noise = keep_endpoints ? custom_noise : NOISE_DEFAULT_HOST;
+    expect_endpoints(keep_endpoints && with_v2 ? custom_api_v2 : VM_API_DEFAULT_BASE_URL,
+                     noise);
+    assert((stored[1][0] != '\0') == keep_endpoints);
+    assert((stored[2][0] != '\0') == keep_endpoints);
+    assert((stored[3][0] != '\0') == (keep_endpoints && with_v2));
+    // Boot never forgets Wi-Fi: saved Wi-Fi without a pairing is an unpaired
+    // device (an unpair keeps it), not a half-written pair.
+    assert((stored[0][0] != '\0') == wifi);
+    // Tokens and Wi-Fi without the marker are a legacy pair: boot marks it.
+    if (!setup && token && (wifi || CONFIG_HOMEHUB_WIFI_SSID[0])) assert(complete);
+    // A marker without credentials is an unpair cut short: boot finishes it.
+    if (setup && !token && !CONFIG_HOMEHUB_WIFI_SSID[0]) assert(!complete);
+}
+static void check_boot(bool setup, bool token, bool wifi, bool keep_endpoints) {
+    check_boot_v2(setup, token, wifi, keep_endpoints, false);
+    check_boot_v2(setup, token, wifi, keep_endpoints, true);
+}
+int main(void) {
+    reset_fixture();
+    assert(apply_endpoints(custom_api, custom_noise));
+    assert(setup_wipe_to_clean(SETUP_RESET_FORGET_WIFI));
+    assert(disconnects == 1 && log_clears == CONFIG_HOMEHUB_SUPPORT_BUG_REPORT);
+    expect_endpoints(VM_API_DEFAULT_BASE_URL, NOISE_DEFAULT_HOST);
+    assert(apply_endpoints(NULL, NULL));
+    expect_endpoints(VM_API_DEFAULT_BASE_URL, NOISE_DEFAULT_HOST);
+
+    assert(apply_endpoints(custom_api, custom_noise));
+    assert(apply_endpoints(NULL, custom_noise));
+    expect_endpoints(VM_API_DEFAULT_BASE_URL, custom_noise);
+    assert(!stored[1][0] && stored[2][0]);
+    // api_url is saved for older firmware but never routes this one.
+    assert(apply_endpoints(custom_api, ""));
+    expect_endpoints(VM_API_DEFAULT_BASE_URL, NOISE_DEFAULT_HOST);
+    assert(stored[1][0] && !stored[2][0]);
+    noise_ctrl_set_host(custom_noise);
+    noise_ctrl_set_host("");
+    assert(!strcmp(s_noise_host, NOISE_DEFAULT_HOST));
+
+    // api_url_v2 sets the base; api_url is still saved for older firmware.
+    reset_fixture();
+    assert(apply_endpoints_v2(custom_api_v2, custom_api, custom_noise));
+    expect_endpoints(custom_api_v2, custom_noise);
+    assert(stored[1][0] && stored[3][0]);
+    // A later pairing without it drops the saved value and uses the default.
+    assert(apply_endpoints(custom_api, custom_noise));
+    expect_endpoints(VM_API_DEFAULT_BASE_URL, custom_noise);
+    assert(stored[1][0] && !stored[3][0]);
+    assert(apply_endpoints_v2(custom_api_v2, NULL, NULL));
+    assert(setup_wipe_to_clean(SETUP_RESET_KEEP_WIFI));
+    expect_endpoints(VM_API_DEFAULT_BASE_URL, NOISE_DEFAULT_HOST);
+
+    const char *failed_keys[] = {"api_url", "api_url_v2", "noise_host"};
+    for (size_t i = 0; i < 3; i++) {
+        reset_fixture();
+        assert(apply_endpoints(custom_api, custom_noise));
+        fail_key = failed_keys[i];
+        assert(!apply_endpoints(custom_api, NULL));
+        assert(failures == 1 && log_clears == CONFIG_HOMEHUB_SUPPORT_BUG_REPORT);
+        expect_endpoints(VM_API_DEFAULT_BASE_URL, NOISE_DEFAULT_HOST);
+    }
+    check_boot(false, false, false, false);  // Orphan endpoint keys.
+    check_boot(false, false, true, false);   // Unpaired, Wi-Fi kept.
+    check_boot(true, false, true, false);    // Marker without credentials: unpaired.
+    check_boot(true, true, true, true);     // Complete custom setup.
+    check_boot(false, true, true, true);    // Legacy marker migration.
+    check_boot(false, true, false, CONFIG_HOMEHUB_WIFI_SSID[0] != '\0');
+
+    // Credentials the device refuses leave the earlier hosts in place until
+    // the wipe, which then resets both: the new hosts are never used.
+    reset_fixture();
+    assert(apply_endpoints_v2(custom_api_v2, custom_api, custom_noise));
+    accept_ok = false;
+    assert(!apply_endpoints_v2(next_api_v2, custom_api, next_noise));
+    assert(accepts == 2 && failures == 1 && !provisioned);
+    expect_endpoints(VM_API_DEFAULT_BASE_URL, NOISE_DEFAULT_HOST);
+    assert(!stored[1][0] && !stored[2][0] && !stored[3][0]);
+    // Once they're stored, the hosts go in with them.
+    accept_ok = true;
+    assert(apply_endpoints_v2(next_api_v2, custom_api, next_noise));
+    assert(accepts == 3 && failures == 1 && provisioned);
+    expect_endpoints(next_api_v2, next_noise);
+    assert(!strcmp(stored[3], next_api_v2) && !strcmp(stored[2], next_noise));
+
+    // A host this build doesn't allow is never used, whether set or saved by
+    // earlier firmware: the device goes to the default instead.
+    const char *api_used = CONFIG_HOMEHUB_CUSTOM_SERVER_HOSTS ? foreign_api
+                                                              : VM_API_DEFAULT_BASE_URL;
+    const char *noise_used = CONFIG_HOMEHUB_CUSTOM_SERVER_HOSTS ? foreign_noise
+                                                                : NOISE_DEFAULT_HOST;
+    reset_fixture();
+    vm_api_set_base_url(foreign_api);
+    noise_ctrl_set_host(foreign_noise);
+    expect_endpoints(api_used, noise_used);
+    reset_fixture();
+    config_set_str("ssid", "saved-wifi");
+    config_set_str("api_url_v2", foreign_api);
+    config_set_str("noise_host", foreign_noise);
+    complete = provisioned = true;
+    boot_endpoints();
+    expect_endpoints(api_used, noise_used);
+    return 0;
+}
+"""
+        harness = harness.replace("@PRODUCTION@", production)
+        harness = harness.replace("@PROVISION@", provision).replace("@BOOT@", boot)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "endpoint_lifecycle.c"
+            source.write_text(harness)
+            # The diagnostic log only exists, and is only cleared, with bug reports on.
+            for name, wifi, unpaired_wifi, bug_report, custom_hosts in (
+                    ("devkit", "", 0, 1, 0), ("muse", "", 1, 1, 0), ("dev_wifi", "dev", 0, 1, 0),
+                    ("no_bug_report", "", 0, 0, 0), ("custom_hosts", "", 0, 1, 1),
+                    ("dev_wifi_custom_hosts", "dev", 0, 1, 1)):
+                with self.subTest(profile=name):
+                    binary = Path(directory) / name
+                    compiled = subprocess.run(
+                        [*cc, "-std=c11", "-Wall", "-Wextra", "-Werror",
+                         f'-DCONFIG_HOMEHUB_WIFI_SSID="{wifi}"',
+                         f"-DWIFI_WITHOUT_PAIRING={unpaired_wifi}",
+                         f"-DCONFIG_HOMEHUB_SUPPORT_BUG_REPORT={bug_report}",
+                         f"-DCONFIG_HOMEHUB_CUSTOM_SERVER_HOSTS={custom_hosts}",
+                         "-I", str(ROOT / "main"), "-I", str(ROOT / "components/muse"),
+                         str(source), "-o", str(binary)],
+                        capture_output=True, text=True,
+                    )
+                    self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
+                    ran = subprocess.run([str(binary)], capture_output=True, text=True)
+                    self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()
