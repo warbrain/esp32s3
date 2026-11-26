@@ -2,7 +2,7 @@
   "family": "meanvc2",
   "schema_version": 1,
   "display_name": "MeanVC2",
-  "description": "MeanVC2 is a lightweight streaming zero-shot voice conversion model. The current audio.cpp package covers the recommended 120ms/40ms quality path.",
+  "description": "MeanVC2 is a lightweight streaming zero-shot voice conversion model. The current native SDK package covers the recommended 120ms/40ms quality path.",
   "category": "voice_conversion",
   "status": "supported",
   "tasks": [
@@ -42,7 +42,7 @@
   "package_defaults": {
     "download": {
       "kind": "huggingface_snapshot",
-      "repo": "audio-cpp/audio.cpp-gguf",
+      "repo": "audio-cpp/audio\u002ecpp-gguf",
       "revision": "main",
       "gated": false
     }

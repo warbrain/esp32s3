@@ -211,7 +211,7 @@
       "strip_prefix": "Audio to text (ASR)",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "mirek190/audio.cpp"
+        "repo": "mirek190/audio\u002ecpp"
       }
     },
     {

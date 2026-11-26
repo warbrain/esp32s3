@@ -100,7 +100,7 @@ add_library(hmi_voice STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/action/actions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/action/ui_input.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/audio_link.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/esp32_audio.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net/esp32_audio_link.cpp)
 target_include_directories(hmi_voice PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
   PRIVATE ${HMI_AUDIOCPP_HEADER_DIR} ${HMI_AUDIOCPP_EXTENSION_DIR})
 target_compile_definitions(hmi_voice PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)

@@ -80,7 +80,7 @@ def parse_args() -> argparse.Namespace:
         "--audiocpp-gguf",
         type=Path,
         default=REPO_ROOT / "build" / "debug" / "bin" / "audiocpp_gguf",
-        help="Path to audio.cpp GGUF converter.",
+        help="Path to native SDK GGUF converter.",
     )
     parser.add_argument("--type", default="orig", choices=["orig", "f16", "bf16", "q4_0", "q4_k"])
     parser.add_argument("--keep-merged", type=Path, help="Optional path to keep the merged safetensors directory.")

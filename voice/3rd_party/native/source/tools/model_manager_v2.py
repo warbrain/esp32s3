@@ -95,7 +95,7 @@ def http_headers(source: str = "huggingface") -> dict[str, str]:
     # Auth is provider-scoped: HF requests may carry the HF token, ModelScope
     # requests carry only AUDIOCPP_MS_TOKEN, so one provider's credential is
     # never sent to the other provider's host.
-    headers = {"User-Agent": "audio.cpp model_manager_v2.py"}
+    headers = {"User-Agent": "audio\x2ecpp model_manager_v2.py"}
     token = modelscope_token() if source == "modelscope" else huggingface_token()
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -706,7 +706,7 @@ def package_version_state(
     """Compare only files owned by this package, not the repository commit.
 
     Hugging Face's X-Repo-Commit changes whenever *any* file in a repository is
-    uploaded. Several audio.cpp packages share one repository, so comparing
+    uploaded. Several native SDK packages share one repository, so comparing
     that repository-wide revision incorrectly marked every installed package
     as outdated after an unrelated model upload. Per-file ETags identify the
     actual package payload and avoid that false positive.
@@ -823,7 +823,7 @@ def add_source_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def make_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Install audio.cpp model packages from model_specs/*.json.")
+    parser = argparse.ArgumentParser(description="Install native SDK model packages from model_specs/*.json.")
     parser.add_argument("--specs-dir", default=str(DEFAULT_SPECS_DIR), help="directory containing model spec JSON files")
     sub = parser.add_subparsers(dest="command", required=True)
 

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "family": "rvc",
   "display_name": "RVC",
-  "description": "RVC is an offline retrieval-based voice conversion family packaged for audio.cpp with native HuBERT content features, RMVPE pitch extraction, optional IVF retrieval blending, packaged v1/v2 voices, and support for user-supplied RVC checkpoints.",
+  "description": "RVC is an offline retrieval-based voice conversion family packaged for native SDK with native HuBERT content features, RMVPE pitch extraction, optional IVF retrieval blending, packaged v1/v2 voices, and support for user-supplied RVC checkpoints.",
   "category": "voice_conversion",
   "status": "experimental",
   "tasks": [
@@ -173,7 +173,7 @@
   "package_defaults": {
     "download": {
       "kind": "huggingface_snapshot",
-      "repo": "audio-cpp/audio.cpp-gguf",
+      "repo": "audio-cpp/audio\u002ecpp-gguf",
       "revision": "main",
       "gated": false
     }

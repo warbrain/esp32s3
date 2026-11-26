@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Stage NVIDIA Sortformer v2.1 weights for audio.cpp.
+"""Stage NVIDIA Sortformer v2.1 weights for native SDK.
 
 This converter reads the official NVIDIA ``.nemo`` checkpoint, not a GGUF
-round-trip, and emits a v2-specific audio.cpp staging directory:
+round-trip, and emits a v2-specific native SDK staging directory:
 
     model.safetensors       canonical ``enc.*``, ``tf.*``, and ``diar.*`` names
     config.json             versioned v2.1 architecture and streaming config
     processor_config.json   exact frontend parameters
-    model_spec.json         temporary self-contained audio.cpp package spec
+    model_spec.json         temporary self-contained native SDK package spec
     tensor_manifest.json    source/destination names, shapes, and dtypes
     provenance.json         source revision, hashes, and license information
 
 The canonical tensor names intentionally match the validated
 handy-computer/transcribe.cpp v2.1 port. They must not be renamed to the v1
 ``fc_encoder.*`` / ``tf_encoder.*`` / ``sortformer_modules.*`` namespaces.
-The v2 audio.cpp loader will consume this contract after the graph adapter is
+The v2 native SDK loader will consume this contract after the graph adapter is
 implemented.
 
 The mapping tables are adapted from handy-computer/transcribe.cpp's
@@ -517,7 +517,7 @@ def main() -> int:
     parser.add_argument("--checkpoint", type=Path, required=True, help="official .nemo file or extracted checkpoint directory")
     parser.add_argument("--output-dir", type=Path, required=True, help="staging directory to create")
     parser.add_argument("--converter", type=Path, help="optional audiocpp_gguf executable")
-    parser.add_argument("--model-spec", type=Path, help="optional audio.cpp model spec; defaults to staging model_spec.json")
+    parser.add_argument("--model-spec", type=Path, help="optional native SDK model spec; defaults to staging model_spec.json")
     parser.add_argument("--gguf-output", type=Path, help="optional final GGUF output path")
     parser.add_argument("--type", choices=["orig", "f16", "q8_0"], default="orig", help="GGUF storage type; use orig for the F32 gate")
     parser.add_argument(

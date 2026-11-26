@@ -229,7 +229,7 @@
       "strip_prefix": "FireRedTTS3-Instruct-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "audio-cpp/audio.cpp-gguf",
+        "repo": "audio-cpp/audio\u002ecpp-gguf",
         "revision": "main",
         "gated": false
       }
@@ -247,7 +247,7 @@
       "strip_prefix": "FireRedTTS3-Instruct-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "audio-cpp/audio.cpp-gguf",
+        "repo": "audio-cpp/audio\u002ecpp-gguf",
         "revision": "main",
         "gated": false
       }
@@ -264,7 +264,7 @@
       "strip_prefix": "FireRedTTS3-Base-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "audio-cpp/audio.cpp-gguf",
+        "repo": "audio-cpp/audio\u002ecpp-gguf",
         "revision": "main",
         "gated": false
       }
@@ -281,7 +281,7 @@
       "strip_prefix": "FireRedTTS3-Base-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "audio-cpp/audio.cpp-gguf",
+        "repo": "audio-cpp/audio\u002ecpp-gguf",
         "revision": "main",
         "gated": false
       }

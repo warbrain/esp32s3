@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Export Chinese G2P dictionaries for the ZipVoice audio.cpp frontend.
+"""Export Chinese G2P dictionaries for the ZipVoice native SDK frontend.
 
 The upstream ZipVoice EmiliaTokenizer converts Chinese text with
 jieba + pypinyin (TONE3 style, tone sandhi, neutral tone = 5) and splits
 every syllable into an initial token (e.g. "w0") plus a final token
-(e.g. "o3"). audio.cpp implements the lookup in C++ but must reproduce
+(e.g. "o3"). native SDK implements the lookup in C++ but must reproduce
 pypinyin's syllable splitting exactly, so this script bakes the split
 into the exported tables:
 

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // PEE architecture and host Sortformer cache update adapted from NVIDIA's
 // NeMo-Speech.cpp speechlm/pee implementation, revision 66d50d91.
-// Graph ownership, weight loading, and execution use audio.cpp's framework.
+// Graph ownership, weight loading, and execution use native SDK's framework.
 #include "engine/community_models/nemotron_transcribe/encoder.h"
 
 #include "engine/framework/core/backend_weight_store.h"

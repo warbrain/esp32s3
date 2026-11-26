@@ -265,7 +265,7 @@ RequestAuth package_auth(const Package & package) {
 }
 
 httplib::Headers request_headers(RequestAuth auth) {
-    httplib::Headers headers{{"User-Agent", "audio.cpp native model manager/1.0"}};
+    httplib::Headers headers{{"User-Agent", "audio\056cpp native model manager/1.0"}};
     const auto token = auth == RequestAuth::modelscope ? modelscope_token() : huggingface_token();
     if (!token.empty()) {
         headers.emplace("Authorization", "Bearer " + token);

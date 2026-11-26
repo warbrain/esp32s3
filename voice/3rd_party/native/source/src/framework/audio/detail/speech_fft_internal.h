@@ -1,5 +1,5 @@
 /*
-This file contains audio.cpp-owned extracted FFT code.
+This file contains FFT code extracted from the upstream ShugoAI SDK.
 
 Copyright (C) 2010-2024 Max-Planck-Society
 Copyright (C) 2019-2020 Peter Bell

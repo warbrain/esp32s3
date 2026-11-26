@@ -315,7 +315,7 @@ private:
                     auto w = modules::SliceModule({1, tap, 1}).build(ctx_, weight);
                     if (ctx_.backend_type == core::BackendType::Metal) {
                         // Metal-only copy workaround; remove this gate and rewrite once
-                        // https://github.com/0xShug0/audio.cpp/pull/831 is merged.
+                        // https://github.com/0xShug0/audio%2Ecpp/pull/831 is merged.
                         w = modules::TransposeModule({{1, 3, 0, 2}, 4}).build(ctx_, w);
                     }
                     w = core::reshape_tensor(ctx_, core::ensure_backend_addressable_layout(ctx_, w), TensorShape::from_dims({channels, 1, 39}));

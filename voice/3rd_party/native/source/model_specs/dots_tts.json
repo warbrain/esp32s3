@@ -2,7 +2,7 @@
   "schema_version": 1,
   "family": "dots_tts",
   "display_name": "DotTTS",
-  "description": "DotTTS is a multilingual zero-shot TTS, voice-cloning, and speech-editing model family packaged for audio.cpp with SOAR and MeanFlow generation, prompt-audio plus prompt-text prefill, speaker-reference conditioning, language tags, multiple synthesis templates, long-form text chunking, and true streaming audio output.",
+  "description": "DotTTS is a multilingual zero-shot TTS, voice-cloning, and speech-editing model family packaged for native SDK with SOAR and MeanFlow generation, prompt-audio plus prompt-text prefill, speaker-reference conditioning, language tags, multiple synthesis templates, long-form text chunking, and true streaming audio output.",
   "category": "tts",
   "status": "supported",
   "tasks": [
@@ -261,7 +261,7 @@
   "package_defaults": {
     "download": {
       "kind": "huggingface_snapshot",
-      "repo": "audio-cpp/audio.cpp-gguf",
+      "repo": "audio-cpp/audio\u002ecpp-gguf",
       "revision": "main",
       "gated": false
     }

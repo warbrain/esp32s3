@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Stage Orukeet r3 weights for audio.cpp (Parakeet TDT family).
+"""Stage Orukeet r3 weights for native SDK (Parakeet TDT family).
 
 This converter reads the official Oruk ``orukeet-v0.1.0.nemo`` checkpoint, not
 a GGUF round-trip, and stages an HF-layout package that the existing
-``parakeet_tdt`` audio.cpp loader consumes unchanged:
+``parakeet_tdt`` native SDK loader consumes unchanged:
 
-    model.safetensors       HF/audio.cpp tensor names (``encoder.*``/``decoder.*``/...)
+    model.safetensors       HF/native SDK tensor names (``encoder.*``/``decoder.*``/...)
     config.json             copied from the stock Parakeet-TDT-0.6B-v3 install
     processor_config.json   copied from the stock install, verified against .nemo
     tokenizer.json          copied from the stock install (tokenizer is unchanged)
@@ -24,12 +24,12 @@ export notes (same frontend, subsampling, vocabulary, predictor, durations).
 The NeMo-side key inventory below was derived from that audit; the HF-side
 names are the contract in ``src/community_models/parakeet_tdt/weights.cpp``.
 
-The NeMo ``joint.pred`` projection (640->640) maps to audio.cpp's
+The NeMo ``joint.pred`` projection (640->640) maps to native SDK's
 ``decoder.decoder_projector``; ``joint.enc`` maps to ``encoder_projector`` and
 ``joint.joint_net.{1,2}`` (index 2 when joint dropout is enabled, else 1) maps
 to ``joint.head``. Batch-norm running statistics are fixed buffers in the
 checkpoint and are staged as ``conv.norm.running_mean/var`` because the
-audio.cpp loader folds them into the depthwise weights at load time.
+native SDK loader folds them into the depthwise weights at load time.
 
 Sidecars are intentionally NOT regenerated: the audit certifies the tokenizer
 is unchanged and this script verifies the preprocessor section of the .nemo
@@ -97,7 +97,7 @@ SUBSAMPLING_TABLE = [
     ("conv.6", "layers.6"),
 ]
 
-# NeMo conformer-layer suffix -> HF/audio.cpp suffix, relative to the layer
+# NeMo conformer-layer suffix -> HF/native SDK suffix, relative to the layer
 # prefix. Batch-norm statistics ride along as fixed buffers.
 LAYER_TABLE = [
     ("norm_feed_forward1.weight", "norm_feed_forward1.weight"),
@@ -352,7 +352,7 @@ def convert(checkpoint: Path, reference: Path, output_dir: Path, source_hash: st
         for kind in ("weight_ih", "weight_hh", "bias_ih", "bias_hh"):
             emit(f"decoder.prediction.dec_rnn.lstm.{kind}_l{layer}",
                  f"decoder.lstm.{kind}_l{layer}", [2560, 640] if "weight" in kind else [2560])
-    # NeMo's joint prediction projection is filed under the audio.cpp decoder.
+    # NeMo's joint prediction projection is filed under the native SDK decoder.
     emit("joint.pred.weight", "decoder.decoder_projector.weight", [640, 640])
     emit("joint.pred.bias", "decoder.decoder_projector.bias", [640])
     emit("joint.enc.weight", "encoder_projector.weight", [640, EXPECTED_HIDDEN])

@@ -2321,7 +2321,7 @@ void convert_tensor_sources_to_gguf(const std::vector<TensorSourceInput> & input
             }
             // GGML requires at least one physical dimension. Preserve a safetensors
             // rank-0 scalar as a one-element tensor and record rank 0 in the exact
-            // audio.cpp shape metadata below.
+            // native SDK shape metadata below.
             core::TensorShape shape = item.shape.empty()
                 ? shape_from_dims({1})
                 : shape_from_dims(item.shape);

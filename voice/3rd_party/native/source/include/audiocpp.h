@@ -1,5 +1,5 @@
 /*
- * audiocpp.h — C ABI for embedding audio.cpp in-process.
+ * audiocpp.h — C ABI for embedding native SDK in-process.
  *
  * This is a thin facade over engine::runtime. It adds no behaviour of its own:
  * every call maps onto ModelRegistry -> ILoadedVoiceModel -> IVoiceTaskSession,
@@ -61,7 +61,7 @@ extern "C" {
  * docs/c_api.md. */
 AUDIOCPP_API uint32_t audiocpp_abi_version(void);
 
-/* audio.cpp's own build version, e.g. "0.2.1". Borrowed, static lifetime. */
+/* native SDK's own build version, e.g. "0.2.1". Borrowed, static lifetime. */
 AUDIOCPP_API const char * audiocpp_build_version(void);
 
 /* ------------------------------------------------------------------ */

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the official OuteTTS 1.0 HF reference for audio.cpp parity.
+"""Run the official OuteTTS 1.0 HF reference for native SDK parity.
 
 The script intentionally keeps the official sampling configuration. It resets
 the PyTorch CPU and CUDA generators immediately before each model.generate()

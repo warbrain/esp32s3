@@ -94,7 +94,7 @@ struct SortformerV2Assets {
     SortformerV2FeatureExtractorConfig feature_config;
     // Optional trained NeMo filterbank, stored as preprocessor.fb in GGUF.
     // Empty preserves compatibility with older packages and uses the
-    // deterministic audio.cpp reconstruction.
+    // deterministic native SDK reconstruction.
     std::vector<float> mel_filterbank;
     std::shared_ptr<const audio::NemoMelFrontend> frontend;
     std::shared_ptr<const assets::TensorSource> model_weights;

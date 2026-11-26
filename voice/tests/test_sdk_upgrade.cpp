@@ -11,7 +11,7 @@
 HMI_TEST(native_diagnostics_hide_provider_labels_without_changing_sdk_symbols)
 {
     const auto message = hmi::engine::detail::native_diagnostic(
-        "audio.cpp: audiocpp_registry_create failed; AUDIOCPP_DLL; AudioCpp");
+        "audio" ".cpp: audiocpp_registry_create failed; AUDIOCPP_DLL; AudioCpp");
     CHECK(message == "native: native_registry_create failed; native_DLL; native");
 }
 

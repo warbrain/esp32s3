@@ -37,7 +37,7 @@ retained in the adapted source.
 
 The v2.1 stream-window scheduling lifecycle is adapted from
 `NVIDIA/NeMo-Speech.cpp`, commit `ffa38cb2408f1e832a36d46fef5e3e1e80d07e6c`,
-under the Apache License 2.0. The audio.cpp implementation translates the
+under the Apache License 2.0. The native SDK implementation translates the
 window geometry and final-tail behavior into its own runtime types; it does not
 copy the NeMo public API or `ParameterParser`.
 

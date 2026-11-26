@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Repack the third-party `cstr/chatterbox-turbo-GGUF` pair into one audio.cpp-native,
+"""Repack the third-party `cstr/chatterbox-turbo-GGUF` pair into one native SDK,
 self-contained GGUF.
 
 The upstream package (published by `cstr` for the CrispASR project, MIT-relicensed; not
-published by ResembleAI or audio.cpp) ships as two loose GGUF files with a flat dot-separated
-tensor namespace and abbreviated S3Gen tensor names. This script repacks both into audio.cpp's
+published by ResembleAI or native SDK) ships as two loose GGUF files with a flat dot-separated
+tensor namespace and abbreviated S3Gen tensor names. This script repacks both into native SDK's
 own "/"-delimited packed-GGUF namespace convention, renames S3Gen tensors back to the exact names
 base Chatterbox's own S3Gen/HiFT-vocoder loader code already expects (so that loader runs
 unmodified, no runtime name-translation bridge needed), and produces the tokenizer as plain
@@ -142,7 +142,7 @@ def reverse_translate_s3gen_name(name_without_s3_prefix):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Repack the cstr/chatterbox-turbo-GGUF pair into an audio.cpp-native GGUF."
+        description="Repack the cstr/chatterbox-turbo-GGUF pair into a native SDK GGUF."
     )
     parser.add_argument(
         "--t3-source",

@@ -29,7 +29,7 @@ usage() {
     cat <<'EOF'
 Usage: scripts/build_metal.sh [options]
 
-Build audio.cpp on macOS with the ggml Metal backend enabled.
+Build native SDK on macOS with the ggml Metal backend enabled.
 
 Options:
   --build-dir <path>       CMake build directory.
@@ -198,7 +198,7 @@ if [[ "$AUDIOCPP_BUILD_NATIVE_MODEL_MANAGER" != "ON" ]]; then
 fi
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-    echo "audio.cpp Metal builds require macOS." >&2
+    echo "native SDK Metal builds require macOS." >&2
     exit 1
 fi
 

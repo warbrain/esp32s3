@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert local ControlFoley PyTorch weights into one audio.cpp GGUF package.
+"""Convert local ControlFoley PyTorch weights into one native SDK GGUF package.
 
 Example:
   build/debug/bin/audiocpp_gguf must exist before running this script.

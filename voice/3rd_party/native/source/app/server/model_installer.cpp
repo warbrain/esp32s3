@@ -302,7 +302,7 @@ std::string ModelInstaller::start(
     if (legacy_conversion && !std::filesystem::is_regular_file(script)) {
         throw std::runtime_error(
             "model preparation helper was not found at " + script.string() +
-            "; run the server from an updated audio.cpp source or portable bundle root");
+            "; run the server from an updated native SDK source or portable bundle root");
     }
 
     std::filesystem::path source_path;

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare the published GLM-TTS checkpoint for audio.cpp.
+"""Prepare the published GLM-TTS checkpoint for native SDK.
 
 The upstream snapshot already stores the Llama and Whisper-VQ weights as
 Safetensors. The remaining PyTorch checkpoints are copied into deterministic
 Safetensors files, and the ChatGLM4/tiktoken rank table is converted to the
-vocab/merge representation consumed by audio.cpp's shared BPE tokenizer.
+vocab/merge representation consumed by native SDK's shared BPE tokenizer.
 
 This tool deliberately does not download files. Point --model-dir at a complete
 zai-org/GLM-TTS snapshot. The native CAMPPlus component uses the canonical
@@ -181,7 +181,7 @@ def convert_torch_checkpoint(
         metadata={
             "format": "pt",
             "source": source.name,
-            "audio.cpp.component": destination.parent.name,
+            "audio\x2ecpp.component": destination.parent.name,
         },
     )
 

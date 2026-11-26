@@ -633,7 +633,7 @@ def h3_adaln_curve_tensors(input_path: Path, grid: int, rank: int) -> tuple[list
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Standalone safetensors to audio.cpp-compatible GGUF converter.")
+    parser = argparse.ArgumentParser(description="Standalone safetensors to native SDK-compatible GGUF converter.")
     parser.add_argument("--input", action="append", type=parse_input, required=True, help="[PREFIX=]PATH.safetensors")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--name", default=None)

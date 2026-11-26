@@ -1,7 +1,7 @@
 #include "engine/framework/core/prepared_graph.h"
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-// Adapted for audio.cpp from NVIDIA/NeMo-Speech.cpp, revision 66d50d91b75a406becd95fbaf39d2c9c13e95d7c.
+// Adapted for native SDK from NVIDIA/NeMo-Speech.cpp, revision 66d50d91b75a406becd95fbaf39d2c9c13e95d7c.
 #include "engine/community_models/nemotron_transcribe/ctc.h"
 
 #include "engine/framework/assets/tensor_source.h"

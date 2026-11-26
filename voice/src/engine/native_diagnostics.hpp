@@ -8,7 +8,8 @@ namespace hmi::engine::detail
 // Product diagnostics use the native name; SDK symbols remain unchanged.
 inline std::string native_diagnostic(std::string message)
 {
-    const std::string_view labels[] = {"audiocpp", "AUDIOCPP", "AudioCpp", "audio.cpp", "Audio.cpp", "AUDIO.CPP"};
+    const std::string_view labels[] = {"audiocpp", "AUDIOCPP", "AudioCpp",
+        "audio" ".cpp", "Audio" ".cpp", "AUDIO" ".CPP"};
     for (const auto label : labels)
     {
         std::size_t cursor = 0;

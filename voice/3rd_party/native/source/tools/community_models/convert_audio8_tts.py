@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert Audio8 TTS safetensors checkpoints to audio.cpp GGUF packages.
+"""Convert Audio8 TTS safetensors checkpoints to native SDK GGUF packages.
 
 Produces one self-contained GGUF per precision with two tensor namespaces:
   model_weights.*  — DualAR slow/fast transformer weights (model.safetensors)

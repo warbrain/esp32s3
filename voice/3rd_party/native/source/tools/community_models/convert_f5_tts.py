@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert Habibi/F5-TTS safetensors checkpoints to audio.cpp GGUF packages.
+"""Convert Habibi/F5-TTS safetensors checkpoints to native SDK GGUF packages.
 
 Produces one self-contained GGUF per checkpoint with two tensor namespaces:
   transformer.*  — the DiT flow-matching transformer (raw EMA torch names)

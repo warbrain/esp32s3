@@ -69,10 +69,10 @@ inline void validate_spec_backed_request_options(
         if (contract.request_option_keys.find(key) == contract.request_option_keys.end()) {
             throw std::runtime_error(
                 "unknown " + std::string(model_name) + " request option: " + key +
-                ". The option may be misspelled or require a newer audio.cpp runtime. "
-                "Supported options: https://github.com/0xShug0/audio.cpp/blob/main/model_specs/" +
+                ". The option may be misspelled or require a newer native SDK runtime. "
+                "Supported options: https://github.com/0xShug0/audio%2Ecpp/blob/main/model_specs/" +
                 contract.metadata.family + ".json. "
-                "Update audio.cpp: https://github.com/0xShug0/audio.cpp/releases");
+                "Update native SDK: https://github.com/0xShug0/audio%2Ecpp/releases");
         }
     }
 }
@@ -90,10 +90,10 @@ inline void validate_spec_backed_request_options(
         if (contract.request_option_keys.find(key) == contract.request_option_keys.end()) {
             throw std::runtime_error(
                 "unknown " + std::string(model_name) + " request option: " + key +
-                ". The option may be misspelled or require a newer audio.cpp runtime. "
-                "Supported options: https://github.com/0xShug0/audio.cpp/blob/main/model_specs/" +
+                ". The option may be misspelled or require a newer native SDK runtime. "
+                "Supported options: https://github.com/0xShug0/audio%2Ecpp/blob/main/model_specs/" +
                 contract.metadata.family + ".json. "
-                "Update audio.cpp: https://github.com/0xShug0/audio.cpp/releases");
+                "Update native SDK: https://github.com/0xShug0/audio%2Ecpp/releases");
         }
     }
 }

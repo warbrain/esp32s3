@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Embed an audio.cpp v1 package in a native NVIDIA SALM decoder GGUF.
+"""Embed a native SDK v1 package in a native NVIDIA SALM decoder GGUF.
 
 Preserves tensor names, shapes, quantization and payload bytes. The native
 encoder remains a sibling and its checkpoint ID must match the decoder.

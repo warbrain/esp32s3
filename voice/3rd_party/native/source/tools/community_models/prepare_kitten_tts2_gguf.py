@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert local Kitten TTS 2 assets into a self-contained audio.cpp GGUF.
+"""Convert local Kitten TTS 2 assets into a self-contained native SDK GGUF.
 
 No network access. Conversion uses NumPy, PyTorch and safetensors offline.
 Inference remains native, with no Python or LibTorch runtime dependency.
@@ -163,7 +163,7 @@ def main() -> None:
             "This Stellon Labs Model is licensed under the Stellon Labs Community License, "
             "Copyright © Stellon Labs Inc. All Rights Reserved\n"
             "Powered by Stellon Labs.\n"
-            "Packaging changes: language-model tensors converted to audio.cpp GGUF; "
+            "Packaging changes: language-model tensors converted to native SDK GGUF; "
             "native S3 meanflow and speaker encoder tensors included with prepared voices.\n"
             "S3 decoder: ResembleAI/chatterbox-turbo; speaker encoder: pyannote/embedding.\n"
             "See native/LICENSE and speaker/LICENSE for their respective terms.\n",

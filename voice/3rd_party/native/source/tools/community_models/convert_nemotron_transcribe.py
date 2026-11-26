@@ -4,7 +4,7 @@
 Use a full BF16 checkpoint and an explicitly supplied, unpatched llama-quantize.
 The output and source must share a filesystem for hardlink staging. This wrapper
 does not download, build a quantizer, patch a dependency, or overwrite outputs.
-Run prepare_nemotron_transcribe.py afterwards to embed the audio.cpp package.
+Run prepare_nemotron_transcribe.py afterwards to embed the native SDK package.
 """
 from __future__ import annotations
 

@@ -21,7 +21,7 @@ sdkconfig.old
 *.onnx
 *.safetensors
 *.wav
-# The pinned audio.cpp CMake configuration embeds these tracked demo assets.
+# The pinned native SDK CMake configuration embeds these tracked demo assets.
 !/voice/3rd_party/native/source/webui/native/demo_voices/*.wav
 
 # Local runtime output

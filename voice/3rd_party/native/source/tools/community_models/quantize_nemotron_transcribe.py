@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Create audited Q4_K/Q3_K/Q2_K audio.cpp Nemotron Transcribe decoders.
+"""Create audited Q4_K/Q3_K/Q2_K native SDK Nemotron Transcribe decoders.
 
 Input is the unquantized BF16 decoder from the pinned NVIDIA SALM conversion.
 One streamed, input-row-padded cache is reused across profiles. It adds zeros
 only to routed expert input columns, keeps logical model metadata unchanged,
-and requires audio.cpp's opt-in expert-row-alignment support. Native llama/NeMo
+and requires native SDK's opt-in expert-row-alignment support. Native llama/NeMo
 inference does not consume these padded layouts.
 
 By default, run prepare_nemotron_transcribe.py afterwards to wrap the decoder.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Encode audio.cpp's RGB24 video artifacts as an MP4."""
+"""Encode native SDK's RGB24 video artifacts as an MP4."""
 import argparse
 import json
 from pathlib import Path

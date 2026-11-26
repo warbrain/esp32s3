@@ -4,7 +4,7 @@
       "id": "moss_soundeffect_requests",
       "coverage": "English and Chinese sound effects, changing durations/prompts/seeds and repeated-request determinism",
       "family": "moss_soundeffect",
-      "model": "models/audio.cpp-gguf/MOSS-SoundEffect-v2-GGUF/moss-soundeffect-v2-q8_0.gguf",
+      "model": "models/audio\u002ecpp-gguf/MOSS-SoundEffect-v2-GGUF/moss-soundeffect-v2-q8_0.gguf",
       "task": "gen",
       "outputs": [
         "audio"
@@ -3324,7 +3324,7 @@
       "requests": [
         {
           "id": "radio_voice_design",
-          "text": "Good evening, and welcome back to the late show. Tonight we are testing the audio.cpp path that designs a voice from text, generates codec tokens, and decodes them into speech.",
+          "text": "Good evening, and welcome back to the late show. Tonight we are testing the audio\u002ecpp path that designs a voice from text, generates codec tokens, and decodes them into speech.",
           "language": "English",
           "instruct": "A warm male radio host in his fifties, calm, confident, and never shrill.",
           "seed": 1234,
@@ -4357,7 +4357,7 @@
       "id": "fireredtts3_base_clone_official",
       "coverage": "FireRedTTS3 Base official voice clone path using reference audio, reference text, RedAE prompt latents, CAMPPlus speaker embedding, AR decode, flow, and RedAE decode",
       "family": "fireredtts3",
-      "model": "models/audio.cpp-gguf/FireRedTTS3-Base-GGUF/fireredtts3-base-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedTTS3-Base-GGUF/fireredtts3-base-orig.gguf",
       "task": "clon",
       "mode": "offline",
       "outputs": [
@@ -4383,7 +4383,7 @@
       "id": "fireredtts3_instruct_official_paths",
       "coverage": "FireRedTTS3 Instruct official clone, voice-design, semantic-edit, and acoustic-edit paths in one session",
       "family": "fireredtts3",
-      "model": "models/audio.cpp-gguf/FireRedTTS3-Instruct-GGUF/fireredtts3-instruct-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedTTS3-Instruct-GGUF/fireredtts3-instruct-orig.gguf",
       "task": "tts",
       "mode": "offline",
       "outputs": [
@@ -4476,7 +4476,7 @@
       "id": "firered_audio_asr_zh_official",
       "coverage": "FireRedAudio official Chinese ASR path through audio encoder and Qwen understanding decode",
       "family": "firered_audio",
-      "model": "models/audio.cpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
       "task": "asr",
       "mode": "offline",
       "outputs": [
@@ -4494,7 +4494,7 @@
       "id": "firered_audio_tts_zh_clone_official",
       "coverage": "FireRedAudio official Chinese TTS clone path through prompt RedAE latents, patch encoder, Qwen audio generation, flow, and RedAE decode",
       "family": "firered_audio",
-      "model": "models/audio.cpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
       "task": "clon",
       "mode": "offline",
       "outputs": [
@@ -4518,7 +4518,7 @@
       "id": "firered_audio_voice_design_official",
       "coverage": "FireRedAudio official voice design path through instruction prompt, Qwen audio generation, flow, and RedAE decode",
       "family": "firered_audio",
-      "model": "models/audio.cpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
       "task": "vdes",
       "mode": "offline",
       "outputs": [
@@ -4541,7 +4541,7 @@
       "id": "firered_audio_semantic_edit_official",
       "coverage": "FireRedAudio official semantic edit path through source-audio RedAE latents, edit prompt, Qwen audio generation, flow, and RedAE decode",
       "family": "firered_audio",
-      "model": "models/audio.cpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
       "task": "gen",
       "mode": "offline",
       "outputs": [
@@ -4563,7 +4563,7 @@
       "id": "firered_audio_acoustic_edit_official",
       "coverage": "FireRedAudio official acoustic edit path through source-audio RedAE latents, edit prompt, Qwen audio generation, flow, and RedAE decode",
       "family": "firered_audio",
-      "model": "models/audio.cpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
       "task": "gen",
       "mode": "offline",
       "outputs": [
@@ -4585,7 +4585,7 @@
       "id": "firered_audio_understand_qa_official",
       "coverage": "FireRedAudio official audio understanding QA path with thinking enabled",
       "family": "firered_audio",
-      "model": "models/audio.cpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
+      "model": "models/audio\u002ecpp-gguf/FireRedAudio-GGUF/firered-audio-orig.gguf",
       "task": "asr",
       "mode": "offline",
       "outputs": [
@@ -5114,7 +5114,7 @@
       "id": "cosyvoice3_official_paths",
       "coverage": "CosyVoice3 official zero-shot, cross-lingual, instruction, and hotfix-pronunciation paths after a short same-session warmup",
       "family": "cosyvoice3",
-      "model": "models/audio.cpp-gguf/CosyVoice3-GGUF/cosyvoice3-q8_0.gguf",
+      "model": "models/audio\u002ecpp-gguf/CosyVoice3-GGUF/cosyvoice3-q8_0.gguf",
       "task": "clon",
       "mode": "offline",
       "outputs": [
@@ -5233,7 +5233,7 @@
       "id": "breeze_tts_clone_official_paths",
       "coverage": "BreezeTTS 2 official voice clone and voice direction paths using prompt audio, prompt transcript, T5Gemma text conditioning, Qwen acoustic generation, depth codebook decoding, and Mimi decode",
       "family": "breeze_tts",
-      "model": "models/audio.cpp-gguf/Breeze-TTS-2-GGUF/breeze-tts-2-bf16.gguf",
+      "model": "models/audio\u002ecpp-gguf/Breeze-TTS-2-GGUF/breeze-tts-2-bf16.gguf",
       "task": "clon",
       "mode": "offline",
       "outputs": [
@@ -5265,7 +5265,7 @@
       "id": "breeze_tts_design_official_paths",
       "coverage": "BreezeTTS 2 official English and Chinese voice design paths using instruction conditioning, T5Gemma text conditioning, Qwen acoustic generation, depth codebook decoding, and Mimi decode",
       "family": "breeze_tts",
-      "model": "models/audio.cpp-gguf/Breeze-TTS-2-GGUF/breeze-tts-2-bf16.gguf",
+      "model": "models/audio\u002ecpp-gguf/Breeze-TTS-2-GGUF/breeze-tts-2-bf16.gguf",
       "task": "tts",
       "mode": "offline",
       "outputs": [

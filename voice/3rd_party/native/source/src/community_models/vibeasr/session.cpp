@@ -174,7 +174,7 @@ runtime::AudioBuffer VibeASRSession::normalize(const runtime::AudioBuffer & audi
     }
     auto mono = engine::audio::mixdown_interleaved_to_mono_average(audio.samples, audio.channels);
     if (audio.sample_rate != kSampleRate) {
-        // VibeASR.cpp resamples with a naive linear kernel; audio.cpp's soxr path
+        // VibeASR.cpp resamples with a naive linear kernel; native SDK's soxr path
         // is the better filter, so a non-24 kHz input will not match the
         // reference sample for sample.
         engine::audio::SoxrResampleOptions options;
@@ -199,7 +199,7 @@ runtime::AudioBuffer VibeASRSession::normalize(const runtime::AudioBuffer & audi
             sample *= gain;
             max_abs = std::max(max_abs, std::abs(sample));
         }
-        // Not in VibeASR.cpp, which can clip on a loud clip; audio.cpp's own
+        // Not in VibeASR.cpp, which can clip on a loud clip; native SDK's own
         // vibevoice_asr frontend clamps here and this port follows it.
         if (max_abs > 1.0F) {
             const float scale = max_abs + kNormalizeEps;

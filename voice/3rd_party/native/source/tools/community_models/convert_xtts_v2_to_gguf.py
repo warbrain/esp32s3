@@ -109,9 +109,9 @@ def write_gpt_gguf(model, cfg, vocab_path, output_path, original_path=None):
         tt.append(5 if (tok.startswith('<') and tok.endswith('>')) or (tok.startswith('[') and tok.endswith(']')) else 4)
     ml=[f"{m.split()[0]} {m.split()[1]}" for m in merges if len(m.split())==2]
     w.add_tokenizer_model("gpt2"); w.add_token_list(tl); w.add_token_scores(ts)
-    # Write token types to old field name (audio.cpp reads tokenizer.ggml.token.type)
+    # Write token types to old field name (native SDK reads tokenizer.ggml.token.type)
     w.add_array("tokenizer.ggml.token.type", tt)
-    # Write merges to old field name (audio.cpp reads tokenizer.ggml.bpe.merges)
+    # Write merges to old field name (native SDK reads tokenizer.ggml.bpe.merges)
     w.add_array("tokenizer.ggml.bpe.merges", ml)
 
     # Tensor ordering: copy from original GGUF if available

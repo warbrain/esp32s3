@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify a converted Echo-TTS GGUF before trying to load it in audio.cpp.
+"""Verify a converted Echo-TTS GGUF before trying to load it in native SDK.
 
 Checks the artifact rather than the conversion process: tensor coverage against
 what the C++ loaders ask for, shapes against the architecture, and dtypes
@@ -277,7 +277,7 @@ def main() -> int:
 
     # --- shapes ---
     # ggml_n_dims() ignores trailing 1s, so a (1, C, 1) tensor would read back as
-    # (C, 1). audio.cpp restores exact logical shapes from two parallel arrays in
+    # (C, 1). native SDK restores exact logical shapes from two parallel arrays in
     # tensor order; without them the loader falls back to the lossy inference.
     exact_shapes = {}
     rank_field = fields.get("audiocpp.tensor_ranks")

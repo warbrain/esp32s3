@@ -49,7 +49,7 @@ const char * build_git_date() {
 }
 
 void print_build_info(std::ostream & out) {
-    out << "audio.cpp " << AUDIOCPP_VERSION_STRING << "\n"
+    out << "native SDK " << AUDIOCPP_VERSION_STRING << "\n"
         << "git: " << AUDIOCPP_GIT_SHA_STRING << " " << AUDIOCPP_GIT_DATE_STRING << "\n"
         << "build: " << build_type() << ", " << compiler_name() << ", "
         << AUDIOCPP_SYSTEM_NAME_STRING << " " << AUDIOCPP_SYSTEM_PROCESSOR_STRING << "\n"
@@ -57,7 +57,7 @@ void print_build_info(std::ostream & out) {
 }
 
 void print_build_info_summary(std::ostream & out) {
-    out << "audio.cpp " << AUDIOCPP_VERSION_STRING
+    out << "native SDK " << AUDIOCPP_VERSION_STRING
         << " (git " << AUDIOCPP_GIT_SHA_STRING << ", " << build_type() << ")"
         << " [backends: " << AUDIOCPP_BUILD_BACKENDS_STRING << "]\n";
 }

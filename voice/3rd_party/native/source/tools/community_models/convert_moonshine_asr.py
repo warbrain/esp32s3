@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert moonshine-ai/moonshine streaming safetensors checkpoints to audio.cpp GGUF packages."""
+"""Convert moonshine-ai/moonshine streaming safetensors checkpoints to native SDK GGUF packages."""
 
 import argparse
 import json

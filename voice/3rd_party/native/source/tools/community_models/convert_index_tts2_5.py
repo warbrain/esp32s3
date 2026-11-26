@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare an official IndexTTS-2.5 checkpoint for audio.cpp's GGUF converter.
+"""Prepare an official IndexTTS-2.5 checkpoint for native SDK's GGUF converter.
 
 Point --model-dir at a complete IndexTeam/IndexTTS-2.5 snapshot. The script writes
 a staging directory whose Safetensors layout matches the tensor namespaces the
@@ -161,7 +161,7 @@ def _stage_config_v2_5(src: Path, dst: Path) -> None:
     """Stage config.yaml with the version field normalized to "2.5".
 
     The official IndexTTS-2.5 snapshot ships config.yaml with `version: 2.0`
-    (inherited from IndexTTS-2). audio.cpp selects the IndexTTS2 family variant
+    (inherited from IndexTTS-2). native SDK selects the IndexTTS2 family variant
     from this field, so the staged copy must declare 2.5 explicitly.
     """
     _require_file(src, "config.yaml")
@@ -236,7 +236,7 @@ def write_native_layout(output_dir: Path, native_dir: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Stage an official IndexTTS-2.5 snapshot for audio.cpp's GGUF converter.",
+        description="Stage an official IndexTTS-2.5 snapshot for native SDK's GGUF converter.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--model-dir", type=Path, required=True,

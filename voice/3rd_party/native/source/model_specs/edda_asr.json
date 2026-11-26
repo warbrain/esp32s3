@@ -137,7 +137,7 @@
   "package_defaults": {
     "download": {
       "kind": "unsupported",
-      "reason": "No published audio.cpp GGUF yet: download a safetensors package and convert it locally with audiocpp_gguf (docs/community_models/edda_asr.md)."
+      "reason": "No published native SDK GGUF yet: download a safetensors package and convert it locally with audiocpp_gguf (docs/community_models/edda_asr.md)."
     }
   },
   "packages": [

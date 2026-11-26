@@ -101,7 +101,7 @@ fs::path cache_base() {
     // (for example /var -> /private/var on macOS). Resolve that anchor before
     // appending our own cache directories, whose symlink checks remain strict.
     const auto anchored = [](const fs::path & path) {
-        return fs::weakly_canonical(fs::absolute(path)) / "audio.cpp" / "espeak-data";
+        return fs::weakly_canonical(fs::absolute(path)) / "audio\056cpp" / "espeak-data";
     };
 #ifdef _WIN32
     const char * base = std::getenv("LOCALAPPDATA");

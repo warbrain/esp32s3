@@ -12,7 +12,7 @@ namespace engine::models::tiny_voca {
 
 // Text -> phoneme ids, with dizione, the model's own phonemizer. This is the
 // only place where the phonemizer (src/community_models/tiny_voca/dizione,
-// which knows nothing of audio.cpp) meets the framework.
+// which knows nothing of native SDK) meets the framework.
 class TinyVocaFrontend {
 public:
     struct Utterance {

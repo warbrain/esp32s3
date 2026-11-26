@@ -93,7 +93,7 @@ ParallelServerState::ParallelServerState(
 #endif
     if (config_.backend != engine::core::BackendType::Cuda) {
         std::cerr
-            << "audio.cpp is optimized for CUDA. The "
+            << "native SDK is optimized for CUDA. The "
             << backend_name(config_.backend)
             << " server backend is intended for portability and testing, but performance and model coverage may be lower than CUDA.\n";
     }
@@ -1425,7 +1425,7 @@ HttpResponse ParallelServerState::handle_transcription_json(const std::string & 
 
 // Accepts the same multipart/form-data shape OpenAI's Whisper API (and clients built against it,
 // e.g. Open WebUI) send: a "file" part with the audio bytes, plus "model" and optional "language"
-// fields. audio.cpp's native JSON request only takes a server-local path, so the uploaded bytes are
+// fields. native SDK's native JSON request only takes a server-local path, so the uploaded bytes are
 // spooled to a temp file and routed through the existing JSON request builder.
 HttpResponse ParallelServerState::handle_transcription_multipart(
     const std::string & body_text, const std::string & boundary, bool detail) {

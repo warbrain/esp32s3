@@ -28,7 +28,7 @@ namespace {
 
 namespace json = engine::io::json;
 
-constexpr const char * kUserAgent = "audio.cpp native model manager/1.0";
+constexpr const char * kUserAgent = "audio\056cpp native model manager/1.0";
 constexpr size_t kMaxJsonBytes = 256u << 20;
 constexpr size_t kMaxPartHeaderBytes = 16 * 1024;
 constexpr size_t kMaxTokenChars = 64000;

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "family": "confucius4_tts",
   "display_name": "Confucius4-TTS",
-  "description": "Confucius4-TTS is a multilingual voice-cloning TTS model packaged for audio.cpp with offline and streaming generation. It uses reference speech, language-aware text normalization, T2S semantic generation, S2A flow matching, style encoding, semantic audio features, and BigVGAN vocoding.",
+  "description": "Confucius4-TTS is a multilingual voice-cloning TTS model packaged for native SDK with offline and streaming generation. It uses reference speech, language-aware text normalization, T2S semantic generation, S2A flow matching, style encoding, semantic audio features, and BigVGAN vocoding.",
   "category": "tts",
   "status": "experimental",
   "tasks": [
@@ -222,7 +222,7 @@
   "package_defaults": {
     "download": {
       "kind": "huggingface_snapshot",
-      "repo": "audio-cpp/audio.cpp-gguf",
+      "repo": "audio-cpp/audio\u002ecpp-gguf",
       "revision": "main",
       "gated": false
     }

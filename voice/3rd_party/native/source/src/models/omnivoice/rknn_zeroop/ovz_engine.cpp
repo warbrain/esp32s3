@@ -571,7 +571,7 @@ int Engine::pack_weights() {
         for (int s = 0; s < 4; ++s) {
             const uint16_t* src = nullptr;
             // the vendor pack_b wants src [N,K] rows directly (no transpose):
-            // w.k == nullptr: q is the fused [q|k|v] block (audio.cpp packed
+            // w.k == nullptr: q is the fused [q|k|v] block (native SDK packed
             // store layout), w.up == nullptr: gate is fused [gate|up]
             switch (s) {
                 case 0:

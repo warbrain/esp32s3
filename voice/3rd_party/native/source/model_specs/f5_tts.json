@@ -133,7 +133,7 @@
   "package_defaults": {
     "download": {
       "kind": "huggingface_snapshot",
-      "repo": "trklou/audio.cpp",
+      "repo": "trklou/audio\u002ecpp",
       "revision": "main",
       "gated": false
     }

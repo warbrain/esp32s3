@@ -2,7 +2,7 @@
 
 Runs MossTTSDelayModel.generate with sampling disabled and the repetition penalty off, so
 the emitted rows are a deterministic function of the weights. That makes the delay-pattern
-state machine in audio.cpp checkable row for row: any divergence is a real divergence and
+state machine in native SDK checkable row for row: any divergence is a real divergence and
 not an RNG difference.
 
     python3 tools/community_models/moss_voicegen/moss_voicegen_reference_generation.py \

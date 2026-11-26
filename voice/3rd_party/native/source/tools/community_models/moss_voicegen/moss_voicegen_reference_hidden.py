@@ -2,14 +2,14 @@
 
 Runs the checkpoint's own MossTTSDelayModel over a prompt produced by its own processor
 and writes the final hidden state, so tests/moss_voicegen/backbone_parity.cpp can check
-the audio.cpp backbone against it.
+the native SDK backbone against it.
 
     python3 tools/community_models/moss_voicegen/moss_voicegen_reference_hidden.py \
         --model /path/to/MOSS-VoiceGenerator \
         --reference tests/moss_voicegen/reference/ref_prompt_en_radio_voice.json \
         --output tests/moss_voicegen/reference/ref_hidden_en_radio_voice.json
 
-The weights are upcast to float32 to match how audio.cpp computes: bf16 storage, f32
+The weights are upcast to float32 to match how native SDK computes: bf16 storage, f32
 math. Running the reference in bf16 instead moves the last-hidden values by roughly 1e-2,
 which is noise on this scale but would make a tight tolerance meaningless.
 """

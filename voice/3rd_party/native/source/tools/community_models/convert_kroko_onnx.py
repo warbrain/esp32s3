@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Convert a free Kroko Zipformer2 package into audio.cpp tensor assets.
+"""Convert a free Kroko Zipformer2 package into native SDK tensor assets.
 
 Kroko community ``.data`` files contain a small JSON header followed by four
 little-endian length-prefixed blobs: encoder ONNX, decoder ONNX, joiner ONNX,
 and tokens.txt.  The ONNX graphs published by Kroko are dynamically quantized.
 This converter recovers named floating-point weights from those graphs so the
-native audio.cpp runtime and the normal GGUF converter can consume them.
+native SDK runtime and the normal GGUF converter can consume them.
 
 Commercial/encrypted Kroko packages are intentionally unsupported.
 """
@@ -130,7 +130,7 @@ def dequantized_matmul_weights(
         quantized = initializers[weight_name].astype(np.float32)
         zero = initializers[zero_name].astype(np.float32)
         scale = initializers[scale_name].astype(np.float32)
-        # ONNX MatMul stores [in, out], whereas audio.cpp Linear weights follow
+        # ONNX MatMul stores [in, out], whereas native SDK Linear weights follow
         # the PyTorch [out, in] convention.
         weight = ((quantized - zero) * scale).T.copy()
         bias_name = downstream_bias(node, initializers, by_input)
@@ -162,7 +162,7 @@ def recover_zipformer_constants(
     ``SimpleDownsample.bias.softmax()`` is exported as a constant weight, and
     the two learned chunkwise-convolution edge scales are anonymous
     ``onnx::Concat_*`` initializers.  They are model parameters, not disposable
-    graph helpers, so preserve them under stable audio.cpp names.
+    graph helpers, so preserve them under stable native SDK names.
     """
     initializers = tensor_map(model)
     recovered: dict[str, np.ndarray] = {}
@@ -383,7 +383,7 @@ def decoder_metadata(path: Path) -> dict[str, int]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("input", type=Path, help="Free Kroko .data package or extracted directory")
-    parser.add_argument("output", type=Path, help="Output audio.cpp model directory")
+    parser.add_argument("output", type=Path, help="Output native SDK model directory")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
 

@@ -26,18 +26,18 @@ MLP_MAP = {
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Convert OpenBMB VoxCPM-0.5B weights to an audio.cpp-native GGUF."
+        description="Convert OpenBMB VoxCPM-0.5B weights to a native SDK GGUF."
     )
     parser.add_argument(
         "--source",
         type=Path,
-        default=Path("/media/leo/Share/audio.cpp/models/VoxCPM-0.5b"),
+        default=Path("/media/leo/Share/audio\x2ecpp/models/VoxCPM-0.5b"),
         help="Directory containing OpenBMB config/tokenizer files, pytorch_model.bin, and audiovae.pth.",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("/media/leo/Share/models/audio.cpp-gguf/VoxCPM1-GGUF/voxcpm-0.5b-q8_0-audiovae-f16.gguf"),
+        default=Path("/media/leo/Share/models/audio\x2ecpp-gguf/VoxCPM1-GGUF/voxcpm-0.5b-q8_0-audiovae-f16.gguf"),
         help="Output GGUF path.",
     )
     parser.add_argument(

@@ -242,7 +242,7 @@ void require_frontend_buffers(
         if (!source.has_tensor(name)) {
             throw std::runtime_error(
                 std::string("Sopro ") + stage + " checkpoint is missing '" + name +
-                "'. audio.cpp reuses torchaudio's stored analysis window and mel "
+                "'. native SDK reuses torchaudio's stored analysis window and mel "
                 "filterbank rather than rebuilding them; re-export the checkpoint "
                 "with persistent buffers.");
         }

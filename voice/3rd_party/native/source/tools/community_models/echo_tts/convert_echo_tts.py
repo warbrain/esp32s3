@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert the published Echo-TTS checkpoint into the GGUF layout audio.cpp loads.
+"""Convert the published Echo-TTS checkpoint into the GGUF layout native SDK loads.
 
 Inputs (download them yourself; this tool does not fetch anything):
 
@@ -19,7 +19,7 @@ Tensors are emitted under three prefixes matching model_specs/echo_tts.json:
     ae/*            the Fish S1-DAC autoencoder, weight norm folded
 
 The Fish S1-DAC autoencoder IS packaged here, under the codec_weights prefix,
-when --fish-dir is supplied. audio.cpp already implements this codec for the
+when --fish-dir is supplied. native SDK already implements this codec for the
 fish_audio family and Echo reuses that implementation -- but not its weights:
 fish_audio ships Fish Audio S2 Pro, while Echo is trained against the S1 DAC
 (jordand/fish-s1-dac-min). Packaging the S1 weights alongside the DiT keeps the
@@ -506,7 +506,7 @@ def convert(args: argparse.Namespace) -> int:
             print(
                 "--fish-dir is required (or pass --no-codec).\n"
                 "Echo decodes through the Fish S1 DAC and its PCA basis is fitted to "
-                "that codec's latent space; audio.cpp's fish_audio package ships S2 Pro, "
+                "that codec's latent space; native SDK's fish_audio package ships S2 Pro, "
                 "which is a different model.",
                 file=sys.stderr,
             )
@@ -537,7 +537,7 @@ def convert(args: argparse.Namespace) -> int:
     over_limit: List[str] = []
     # ggml_n_dims() ignores trailing dimensions of size 1, so a (1, C, 1) snake
     # alpha reads back as (C, 1) and fails codec.cpp's {1, C, 1} shape check.
-    # audio.cpp preserves exact logical shapes through two parallel arrays, in
+    # native SDK preserves exact logical shapes through two parallel arrays, in
     # tensor order: audiocpp.tensor_ranks (INT32) and the concatenated
     # audiocpp.tensor_shapes (INT64). Both must be present or neither.
     tensor_ranks: List[int] = []

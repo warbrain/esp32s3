@@ -2,7 +2,7 @@
 
 Packing follows KittenML/KittenTTS kittenml/kittentts2/ternary.py.
 Updated exports require NumPy, PyTorch and safetensors during conversion only.
-TQ2_1 uses audio.cpp's type ID 44, not the Kitten llama.cpp fork's ID 43.
+TQ2_1 uses native SDK's type ID 44, not the Kitten llama.cpp fork's ID 43.
 """
 from __future__ import annotations
 

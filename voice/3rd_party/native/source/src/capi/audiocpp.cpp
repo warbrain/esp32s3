@@ -129,13 +129,13 @@ void load_library_backends() {
         if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                                    GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                                reinterpret_cast<LPCWSTR>(&g_backend_load_once), &module)) {
-            throw std::runtime_error("Could not locate the audio.cpp DLL");
+            throw std::runtime_error("Could not locate the native SDK DLL");
         }
         std::vector<wchar_t> path(512);
         while (true) {
             const DWORD length = GetModuleFileNameW(module, path.data(), static_cast<DWORD>(path.size()));
             if (length == 0) {
-                throw std::runtime_error("Could not resolve the audio.cpp DLL path");
+                throw std::runtime_error("Could not resolve the native SDK DLL path");
             }
             if (length < path.size()) {
                 library_path = std::wstring(path.data(), length);
@@ -146,7 +146,7 @@ void load_library_backends() {
 #else
         Dl_info info{};
         if (dladdr(&g_backend_load_once, &info) == 0 || info.dli_fname == nullptr) {
-            throw std::runtime_error("Could not locate the audio.cpp shared library");
+            throw std::runtime_error("Could not locate the native SDK shared library");
         }
         library_path = info.dli_fname;
 #endif

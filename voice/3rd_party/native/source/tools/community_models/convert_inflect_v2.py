@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert the official Inflect v2 ONNX exports to audio.cpp safetensors."""
+"""Convert the official Inflect v2 ONNX exports to native SDK safetensors."""
 
 from __future__ import annotations
 

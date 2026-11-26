@@ -8,7 +8,7 @@ Only the tensors the harness actually consumes are packed; the per-block
 activations are 24 x 640 x 2048 and are included only with --blocks, which
 takes the archive from a few MB to a few hundred.
 
-Format, all little-endian, which is the only byte order audio.cpp targets:
+Format, all little-endian, which is the only byte order native SDK targets:
 
     magic   8 bytes  "ECHOPAR1"
     count   int32    number of entries

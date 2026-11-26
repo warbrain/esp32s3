@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert YuE2 weights into the audio.cpp native GGUF package layout."""
+"""Convert YuE2 weights into the native SDK native GGUF package layout."""
 
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ def parse_args() -> argparse.Namespace:
         "--audiocpp-gguf",
         type=Path,
         default=REPO_ROOT / "build" / "debug" / "bin" / "audiocpp_gguf",
-        help="Path to the audio.cpp GGUF converter.",
+        help="Path to the native SDK GGUF converter.",
     )
     parser.add_argument(
         "--model-type",

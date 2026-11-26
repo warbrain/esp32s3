@@ -1,4 +1,4 @@
-# audio.cpp vendoring notes
+# native SDK vendoring notes
 
 This directory vendors the unmodified `lib/` sources of
 [LZ4](https://github.com/lz4/lz4) release `v1.10.0`

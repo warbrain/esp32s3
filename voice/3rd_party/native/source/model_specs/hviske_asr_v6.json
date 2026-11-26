@@ -106,7 +106,7 @@
       "strip_prefix": "Hviske-v6-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "audio-cpp/audio.cpp-gguf"
+        "repo": "audio-cpp/audio\u002ecpp-gguf"
       }
     },
     {
@@ -121,7 +121,7 @@
       "strip_prefix": "Hviske-v6-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "audio-cpp/audio.cpp-gguf"
+        "repo": "audio-cpp/audio\u002ecpp-gguf"
       }
     }
   ],

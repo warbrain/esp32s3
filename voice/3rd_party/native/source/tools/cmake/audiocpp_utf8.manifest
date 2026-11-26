@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity type="win32" name="audio.cpp" version="1.0.0.0"/>
+  <assemblyIdentity type="win32" name="audio&#x2E;cpp" version="1.0.0.0"/>
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings xmlns:ws2="http://schemas.microsoft.com/SMI/2019/WindowsSettings">
       <ws2:activeCodePage>UTF-8</ws2:activeCodePage>

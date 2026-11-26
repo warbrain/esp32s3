@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-// Adapted for audio.cpp from NVIDIA/NeMo-Speech.cpp, revision 66d50d91b75a406becd95fbaf39d2c9c13e95d7c.
+// Adapted for native SDK from NVIDIA/NeMo-Speech.cpp, revision 66d50d91b75a406becd95fbaf39d2c9c13e95d7c.
 // Build this file with floating-point contraction disabled: every float operation rounds as in
 // NumPy and PyTorch, and the fused ones are explicit std::fma calls.
 // numpy_log, pairwise_sum and torch_linspace reproduce NumPy and PyTorch routines, and

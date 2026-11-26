@@ -2,7 +2,7 @@
   "schema_version": 1,
   "family": "sense_asr",
   "display_name": "SenseVoice-Small",
-  "description": "SenseVoice-Small multilingual speech recognition with rich event/emotion/ITN tags via a SAN-M encoder and CTC head, ported to audio.cpp.",
+  "description": "SenseVoice-Small multilingual speech recognition with rich event/emotion/ITN tags via a SAN-M encoder and CTC head, ported to native SDK.",
   "category": "asr",
   "status": "community",
   "tasks": [
@@ -136,7 +136,7 @@
     {
       "id": "sensevoice_small_q8",
       "display_name": "SenseVoice-Small Q8 GGUF",
-      "description": "audio.cpp GGUF built from the SenseVoice-Small checkpoint via the SenseVoice llama.cpp export script.",
+      "description": "native SDK GGUF built from the SenseVoice-Small checkpoint via the SenseVoice llama.cpp export script.",
       "default": true,
       "format": "gguf",
       "precision": "q8_0",

@@ -104,7 +104,7 @@
   "package_defaults": {
     "download": {
       "kind": "unsupported",
-      "reason": "CC-BY-NC-4.0 checkpoint: convert locally with audiocpp_gguf; no public audio.cpp GGUF distribution is approved."
+      "reason": "CC-BY-NC-4.0 checkpoint: convert locally with audiocpp_gguf; no public native SDK GGUF distribution is approved."
     }
   },
   "packages": [

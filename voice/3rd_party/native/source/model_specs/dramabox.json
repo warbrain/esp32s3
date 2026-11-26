@@ -2,7 +2,7 @@
   "schema_version": 1,
   "family": "dramabox",
   "display_name": "DramaBox",
-  "description": "DramaBox is an English expressive TTS and voice-cloning model packaged for audio.cpp as a standalone GGUF bundle. It combines Gemma text conditioning, diffusion sampling, reference-audio conditioning, long-form chunking, and 48 kHz stereo output.",
+  "description": "DramaBox is an English expressive TTS and voice-cloning model packaged for native SDK as a standalone GGUF bundle. It combines Gemma text conditioning, diffusion sampling, reference-audio conditioning, long-form chunking, and 48 kHz stereo output.",
   "category": "tts",
   "status": "experimental",
   "tasks": [
@@ -156,7 +156,7 @@
   "package_defaults": {
     "download": {
       "kind": "huggingface_snapshot",
-      "repo": "audio-cpp/audio.cpp-gguf",
+      "repo": "audio-cpp/audio\u002ecpp-gguf",
       "revision": "main",
       "gated": false
     }

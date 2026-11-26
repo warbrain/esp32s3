@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Convert the official MiraTTS checkpoint into audio.cpp tensor assets.
+"""Convert the official MiraTTS checkpoint into native SDK tensor assets.
 
 The upstream package combines a Qwen2 safetensors checkpoint, two ONNX
 graphs, a DAC decoder safetensors checkpoint, and a small PyTorch 48 kHz
-upsampler.  audio.cpp does not execute ONNX or pickle at runtime: this tool
+upsampler.  native SDK does not execute ONNX or pickle at runtime: this tool
 extracts and gives stable names to all learned tensors, fuses upsampler weight
 normalization, and writes one ordinary safetensors file per runtime namespace.
 """
@@ -76,7 +76,7 @@ def onnx_tensors(path: Path, namespace: str, anonymous: dict[str, str]) -> dict[
         value = np.asarray(numpy_helper.to_array(tensor))
         if value.ndim == 0:
             value = value.reshape(1)
-        # ONNX MatMul parameters are [in, out]; audio.cpp Linear parameters
+        # ONNX MatMul parameters are [in, out]; native SDK Linear parameters
         # follow PyTorch's [out, in] convention.
         if tensor.name.startswith("onnx::MatMul_"):
             value = value.T
@@ -166,7 +166,7 @@ def upsampler_tensors(path: Path) -> dict[str, torch.Tensor]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("input", type=Path, help="downloaded YatharthS/MiraTTS directory")
-    parser.add_argument("output", type=Path, help="output audio.cpp model directory")
+    parser.add_argument("output", type=Path, help="output native SDK model directory")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
     root = args.input.resolve()

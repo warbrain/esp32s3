@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Convert Irodori-TTS-v4.1-Anime int8 weights to audio.cpp native GGUF.
+"""Convert Irodori-TTS-v4.1-Anime int8 weights to native SDK native GGUF.
 
-The fine-tune ships TorchAO-style int8 packed tensors. audio.cpp should not
+The fine-tune ships TorchAO-style int8 packed tensors. native SDK should not
 learn that fine-tune-specific layout at runtime, so this script dequantizes the
 packed pairs back to the native Irodori tensor names and then lets
 ``audiocpp_gguf`` write the normal self-contained q8_0 GGUF.
@@ -170,7 +170,7 @@ def parse_args() -> argparse.Namespace:
         "--base-gguf",
         type=Path,
         required=True,
-        help="audio.cpp native Irodori v4 Small GGUF used for codec weights and base sidecars.",
+        help="native SDK native Irodori v4 Small GGUF used for codec weights and base sidecars.",
     )
     parser.add_argument(
         "--converter",

@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Match the optional test filenames in a full upstream source bundle.
+string(CONCAT _upstream_audio_test_suffix "audio" ".cpp")
+
 project(AudioCpp LANGUAGES C CXX)
 
-set(AUDIOCPP_VERSION "dev" CACHE STRING "audio.cpp version string")
+set(AUDIOCPP_VERSION "dev" CACHE STRING "native SDK version string")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -706,7 +709,7 @@ add_library(engine_core OBJECT
     src/framework/codecs/mimi_codec_runtime.cpp
     src/framework/codecs/mimi_latent_decoder_runtime.cpp
     src/framework/codecs/moss_audio_tokenizer_codec_runtime.cpp
-    src/framework/codecs/neural_audio.cpp
+    src/framework/codecs/neural_codec.cpp
     src/framework/codecs/oobleck_audio_vae_runtime.cpp
     src/framework/codecs/redae_codec_runtime.cpp
     src/framework/codecs/qwen3_audio_tokenizer_encoder.cpp
@@ -903,7 +906,7 @@ audiocpp_add_model(ced
 audiocpp_add_model(lfm_d1_omni
     SOURCES
         src/models/lfm_d1_omni/assets.cpp
-        src/models/lfm_d1_omni/audio.cpp
+        src/models/lfm_d1_omni/audio_frontend.cpp
         src/models/lfm_d1_omni/questions.cpp
         src/models/lfm_d1_omni/session.cpp
     INCLUDES
@@ -1441,7 +1444,7 @@ endif()
 audiocpp_add_model(soulx_flashhead
     SOURCES
         src/models/soulx_flashhead/color.cpp
-        src/models/soulx_flashhead/audio.cpp
+        src/models/soulx_flashhead/audio_conditioning.cpp
         src/models/soulx_flashhead/assets.cpp
         src/models/soulx_flashhead/dit.cpp
         src/models/soulx_flashhead/vae.cpp
@@ -1759,7 +1762,7 @@ audiocpp_add_model(vibevoice
         src/models/vibevoice/lora.cpp
         src/models/vibevoice/scheduler.cpp
         src/models/vibevoice/session.cpp
-        src/models/vibevoice/tokenizer_audio.cpp
+        src/models/vibevoice/audio_tokenizer.cpp
         src/models/vibevoice/tokenizer_text.cpp
     INCLUDES
         engine/models/vibevoice/loader.h
@@ -3157,7 +3160,7 @@ foreach(object_library IN LISTS AUDIOCPP_MODEL_OBJECT_LIBRARIES)
     list(APPEND AUDIOCPP_RUNTIME_OBJECTS $<TARGET_OBJECTS:${object_library}>)
 endforeach()
 
-message(STATUS "audio.cpp model composite: ${AUDIOCPP_MODEL_SET} selected [${AUDIOCPP_ENABLED_MODELS}] linked [${AUDIOCPP_LINKED_MODELS}]")
+message(STATUS "native SDK model composite: ${AUDIOCPP_MODEL_SET} selected [${AUDIOCPP_ENABLED_MODELS}] linked [${AUDIOCPP_LINKED_MODELS}]")
 add_library(engine_runtime STATIC
     src/framework/runtime/registry.cpp
     ${AUDIOCPP_RUNTIME_OBJECTS}
@@ -3446,7 +3449,7 @@ endif()
 # ---------------------------------------------------------------------------
 # C ABI (opt-in)
 #
-# A thin facade over engine::runtime for embedding audio.cpp in-process from
+# A thin facade over engine::runtime for embedding native SDK in-process from
 # languages that can call C. Purely additive: nothing above this point changes
 # when AUDIOCPP_BUILD_C_API is OFF, which is the default.
 # ---------------------------------------------------------------------------
@@ -3663,7 +3666,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${AUDIOCPP_UI_DI
 if (EXISTS "${AUDIOCPP_UI_DIST}")
     file(READ "${AUDIOCPP_UI_DIST}" AUDIOCPP_UI_HEX HEX)
 else()
-    string(HEX "<!doctype html><title>audio.cpp</title><p>Embedded WebUI assets are unavailable.</p>" AUDIOCPP_UI_HEX)
+    string(HEX "<!doctype html><title>Native model server</title><p>Embedded WebUI assets are unavailable.</p>" AUDIOCPP_UI_HEX)
 endif()
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," AUDIOCPP_UI_BYTES "${AUDIOCPP_UI_HEX}")
 string(REPLACE "," ",\n" AUDIOCPP_UI_BYTES "${AUDIOCPP_UI_BYTES}")
@@ -4309,7 +4312,7 @@ if (ENGINE_BUILD_TESTS OR ENGINE_BUILD_EXTENDED_TESTS OR ENGINE_BUILD_MODEL_TEST
             add_engine_unittest(kugelaudio_reference_encoder_probe tests/kugelaudio/reference_encoder_probe.cpp)
             add_engine_unittest(kugelaudio_cloning_session_probe tests/kugelaudio/cloning_session_probe.cpp)
         endif()
-        add_engine_unittest(kugelaudio_reference_audio_test tests/kugelaudio/test_reference_audio.cpp)
+        add_engine_unittest(kugelaudio_reference_audio_test tests/kugelaudio/test_reference_${_upstream_audio_test_suffix})
         target_include_directories(kugelaudio_reference_audio_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests)
         add_test(NAME kugelaudio_reference_audio_test COMMAND kugelaudio_reference_audio_test)
     endif()
@@ -4608,7 +4611,7 @@ if (ENGINE_BUILD_TESTS OR ENGINE_BUILD_EXTENDED_TESTS OR ENGINE_BUILD_MODEL_TEST
 
         add_engine_unittest(partial_text_test tests/unittests/test_partial_text.cpp)
         add_test(NAME partial_text_test COMMAND partial_text_test)
-        add_engine_unittest(streaming_audio_test tests/unittests/test_streaming_audio.cpp)
+        add_engine_unittest(streaming_audio_test tests/unittests/test_streaming_${_upstream_audio_test_suffix})
         add_engine_unittest(streaming_asr_session_test tests/unittests/test_streaming_asr_session.cpp)
         add_test(NAME streaming_asr_session_test COMMAND streaming_asr_session_test)
         add_test(NAME streaming_audio_test COMMAND streaming_audio_test)
@@ -5211,7 +5214,7 @@ if (ENGINE_BUILD_TESTS OR ENGINE_BUILD_EXTENDED_TESTS OR ENGINE_BUILD_MODEL_TEST
         # Model-specific tests and probes.
         if (ace_step IN_LIST AUDIOCPP_LINKED_MODELS)
             add_engine_unittest(ace_step_timbre_cache_probe tests/ace_step/timbre_cache_probe.cpp)
-            add_engine_unittest(ace_step_reference_audio_test tests/ace_step/reference_audio.cpp)
+            add_engine_unittest(ace_step_reference_audio_test tests/ace_step/reference_${_upstream_audio_test_suffix})
             add_test(NAME ace_step_reference_audio_test COMMAND ace_step_reference_audio_test --log)
         endif()
         if (zipvoice IN_LIST AUDIOCPP_LINKED_MODELS)

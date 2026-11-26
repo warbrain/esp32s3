@@ -1,6 +1,6 @@
 """Check the MOSS codec attention contexts against the checkpoints they describe.
 
-audio.cpp hardcodes each codec's per-stage attention context as a step count.
+native SDK hardcodes each codec's per-stage attention context as a step count.
 The checkpoint states it as a DURATION, per stage, which the reference turns into
 steps with `int(round(current_frame_rate * context_duration))` -- where the rate
 is the one *before* that transformer, not after its patch.

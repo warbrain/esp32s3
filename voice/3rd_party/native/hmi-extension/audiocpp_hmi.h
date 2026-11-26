@@ -2,7 +2,7 @@
 
 #include "audiocpp.h"
 
-// Additive, optional HMI exports. Core ABI remains the upstream audio.cpp ABI.
+// Additive, optional HMI exports. Core ABI remains the upstream native SDK ABI.
 // Legacy HMI packages declare these extensions directly in audiocpp.h.
 #ifndef AUDIOCPP_AUDIO_FRONTEND_STATISTICS_VERSION
 

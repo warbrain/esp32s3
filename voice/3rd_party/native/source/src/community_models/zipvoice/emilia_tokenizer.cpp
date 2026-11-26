@@ -238,7 +238,7 @@ std::vector<int32_t> EmiliaTokenizer::encode(const std::string & raw_text) const
         }
         if (part.lang == 'e') {
             // English segment: eSpeak-ng phonemization, one phone per
-            // codepoint (matches the audio.cpp espeak frontend convention).
+            // codepoint (matches the native SDK espeak frontend convention).
             // eSpeak treats sentence punctuation as clause markers and drops
             // it from the phoneme stream, but the reference keeps it as
             // tokens, so re-append trailing punctuation here.

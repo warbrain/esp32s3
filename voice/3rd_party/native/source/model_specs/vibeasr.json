@@ -2,7 +2,7 @@
   "schema_version": 1,
   "family": "vibeasr",
   "display_name": "VibeVoice-ASR-BitNet",
-  "description": "VibeASR.cpp's CPU-first VibeVoice ASR port: an INT8 (I8_S) audio VAE encoder feeding a ternary (I2_S) Qwen2 decoder, ported to audio.cpp.",
+  "description": "VibeASR.cpp's CPU-first VibeVoice ASR port: an INT8 (I8_S) audio VAE encoder feeding a ternary (I2_S) Qwen2 decoder, ported to native SDK.",
   "category": "asr",
   "status": "community",
   "tasks": [
@@ -88,7 +88,7 @@
     {
       "id": "vibeasr_bitnet_i2_s",
       "display_name": "VibeVoice-ASR-BitNet I8_S encoder + I2_S decoder",
-      "description": "Upstream VibeASR.cpp GGUF package. The two GGUFs carry the VibeASR ggml fork's type ids and need one pass of tools/community_models/convert_vibeasr_gguf.py --in-place before audio.cpp can load them.",
+      "description": "Upstream VibeASR.cpp GGUF package. The two GGUFs carry the VibeASR ggml fork's type ids and need one pass of tools/community_models/convert_vibeasr_gguf.py --in-place before native SDK can load them.",
       "default": true,
       "format": "gguf",
       "precision": "native",

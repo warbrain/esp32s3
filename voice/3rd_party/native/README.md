@@ -1,6 +1,6 @@
-# Bundled audio.cpp
+# Bundled native SDK
 
-`source/UPSTREAM_REVISION` pins the imported audio.cpp snapshot. The SDK stages
+`source/UPSTREAM_REVISION` pins the upstream ShugoAI SDK snapshot. The SDK stages
 that commit in `sdk-manifest.json` alongside the ABI and file hashes. Build and
 deploy `native.dll` and the GGML DLLs from the same configuration.
 

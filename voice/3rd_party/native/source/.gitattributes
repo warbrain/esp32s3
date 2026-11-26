@@ -1,0 +1,12 @@
+# Keep the line endings expected by the SDK package's license checksums.
+/LICENSE text eol=lf
+/licenses/H-GTCRN-LICENSE text eol=lf
+/external/cJSON/LICENSE text eol=lf
+/external/libyaml/License text eol=lf
+/external/ggml/AUTHORS text eol=crlf
+/external/ggml/LICENSE text eol=crlf
+/external/sentencepiece/LICENSE text eol=crlf
+/external/sentencepiece/third_party/absl/LICENSE text eol=crlf
+/external/sentencepiece/third_party/darts_clone/LICENSE text eol=crlf
+/external/sentencepiece/third_party/esaxx/LICENSE text eol=crlf
+/external/sentencepiece/third_party/protobuf-lite/LICENSE text eol=crlf

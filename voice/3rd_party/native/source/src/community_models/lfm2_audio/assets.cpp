@@ -281,7 +281,7 @@ std::string reinstall_command(const std::filesystem::path & model_root, const st
 }
 
 // TTS and S2S need the vocoder and detokenizer GGUFs, which packages
-// installed before audio.cpp had LFM2-Audio TTS do not have: those held the
+// installed before native SDK had LFM2-Audio TTS do not have: those held the
 // backbone and mmproj only. Both package managers refuse to add files to a
 // package that is partly there without --overwrite.
 void require_output_files(
@@ -301,7 +301,7 @@ void require_output_files(
 
     const auto files = missing.size() == 1 ? missing[0] : missing[0] + " and " + missing[1];
     throw std::runtime_error("LFM2-Audio TTS and speech-to-speech need " + files + ", which " + assets.model_root.string() +
-                             " does not have. Packages installed before audio.cpp had LFM2-Audio TTS hold only the backbone "
+                             " does not have. Packages installed before native SDK had LFM2-Audio TTS hold only the backbone "
                              "and mmproj GGUFs; reinstall with: " +
                              reinstall_command(assets.model_root, model_path.filename().string()) +
                              " (or choose the files with lfm2_audio.vocoder_gguf and lfm2_audio.detokenizer_gguf)");

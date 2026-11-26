@@ -1,4 +1,4 @@
-# Keep upstream options and target names out of audio.cpp's CMake scope.
+# Keep upstream options and target names out of native SDK's CMake scope.
 include(ExternalProject)
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)

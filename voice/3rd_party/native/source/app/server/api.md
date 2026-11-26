@@ -35,7 +35,7 @@ and the commit date.
 
 ## `GET /v1/models`
 
-Returns OpenAI-style model entries for the configured audio.cpp model ids.
+Returns OpenAI-style model entries for the configured native SDK model ids.
 Each entry's `configured` is `true` for an id the server config defines and
 `false` for a model loaded later through `POST /v1/models/load`.
 Each entry includes `device`, the effective backend device index after applying
@@ -75,7 +75,7 @@ Top-level `speed` (or `speaking_rate`) is a positive speech-rate multiplier when
 the model spec declares support. Explicit values, including `1`, override the
 configured speed default. For models without declared speed support, `1` is
 accepted as omitted; other values are rejected. For Kokoro, use the
-[GGUF published on September 22, 2026 (UTC)](https://huggingface.co/audio-cpp/audio.cpp-gguf/commit/406756ee8e3b16e902ce40112986c1010775f888)
+[GGUF published on September 22, 2026 (UTC)](https://huggingface.co/audio-cpp/audio%2Ecpp-gguf/commit/406756ee8e3b16e902ce40112986c1010775f888)
 or a later published version. Other model controls are not implied by OpenAI
 API compatibility.
 
@@ -85,7 +85,7 @@ curl http://127.0.0.1:8080/v1/audio/speech \
   -o out.wav \
   -d '{
     "model": "pocket-tts",
-    "input": "audio.cpp is serving this request through the framework runtime.",
+    "input": "native SDK is serving this request through the framework runtime.",
     "max_tokens": 96,
     "seed": 1234
   }'
@@ -120,7 +120,7 @@ curl http://127.0.0.1:8080/v1/audio/speech \
   }'
 ```
 
-Set `"response_format": "json"` to receive base64 WAV in a JSON response. In builds configured with `-DAUDIOCPP_BUILD_SERVER_FRONTENDS=ON -DAUDIOCPP_SERVER_FRONTENDS_DIR=external/audio.cpp-server-frontends -DAUDIOCPP_SERVER_FRONTEND_MODULES=mp3_encode`, `"response_format": "mp3"` returns `audio/mpeg` MP3 bytes for non-streaming speech requests.
+Set `"response_format": "json"` to receive base64 WAV in a JSON response. In builds configured with `-DAUDIOCPP_BUILD_SERVER_FRONTENDS=ON -DAUDIOCPP_SERVER_FRONTENDS_DIR=external/audio"."cpp-server-frontends -DAUDIOCPP_SERVER_FRONTEND_MODULES=mp3_encode`, `"response_format": "mp3"` returns `audio/mpeg` MP3 bytes for non-streaming speech requests.
 
 For streaming-capable TTS models configured with `mode: "streaming"`, `stream_format` follows the OpenAI speech streaming shape:
 
@@ -182,7 +182,7 @@ curl http://127.0.0.1:8080/v1/audio/transcriptions \
   -F file=@/path/to/input.wav
 ```
 
-`file` and `model` are required; `language` is optional. Uploaded WAV bytes are decoded in memory and are not written to a temporary file. In builds configured with `-DAUDIOCPP_BUILD_SERVER_FRONTENDS=ON -DAUDIOCPP_SERVER_FRONTENDS_DIR=external/audio.cpp-server-frontends -DAUDIOCPP_SERVER_FRONTEND_MODULES=audio_decode`, the frontend also accepts MP3 and FLAC input for this route, decodes it to a temporary WAV, and forwards that normalized request to the same core transcription handler.
+`file` and `model` are required; `language` is optional. Uploaded WAV bytes are decoded in memory and are not written to a temporary file. In builds configured with `-DAUDIOCPP_BUILD_SERVER_FRONTENDS=ON -DAUDIOCPP_SERVER_FRONTENDS_DIR=external/audio"."cpp-server-frontends -DAUDIOCPP_SERVER_FRONTEND_MODULES=audio_decode`, the frontend also accepts MP3 and FLAC input for this route, decodes it to a temporary WAV, and forwards that normalized request to the same core transcription handler.
 
 For streaming-capable ASR models configured with `mode: "streaming"`, pass `stream=true` to receive OpenAI-style transcription SSE:
 
@@ -250,7 +250,7 @@ Spans are sample offsets rather than seconds because that is what the models rep
 ## `POST /v1/batches/transcriptions`
 
 Runs multiple uploaded WAV files through one native offline model batch. This is
-an audio.cpp extension, not an OpenAI API endpoint. The selected model must
+a native SDK extension, not an OpenAI API endpoint. The selected model must
 implement native batching; the server rejects unsupported models instead of
 silently running each file separately.
 
@@ -442,7 +442,7 @@ curl http://127.0.0.1:8080/v1/tasks/run \
   -d '{
     "model": "pocket-tts",
     "request": {
-      "text": "Generic audio.cpp request.",
+      "text": "Generic native SDK request.",
       "voice_ref": "/path/to/reference.wav",
       "max_tokens": 96,
       "seed": 1234

@@ -18,7 +18,7 @@ Measured converter inspection identifies these inputs:
 - `checkpoints/whistle.safetensors` supplies the published FP32 checkpoint, renamed locally to `whistle.safetensors`.
 - `config.json` supplies the model configuration.
 - `whistle.cact` supplies the tokenizer blob, 257-by-80 mel filterbank, and two 512-element Hadamard permutations.
-- `LICENSE` supplies the upstream license text, not audio.cpp's license.
+- `LICENSE` supplies the upstream license text, not native SDK's license.
 
 `convert.py` verifies each source file's length and SHA-256 before conversion.
 `extract_assets.py` verifies the four extracted assets' shapes, lengths, and SHA-256 hashes.
@@ -40,7 +40,7 @@ The sidecars are `LICENSE`, `config.json`, `tokenizer.blob`, `mel_filterbank_80.
 The upstream LICENSE therefore remains inside the converted GGUF.
 Do not remove that license when extracting or repackaging the model.
 For any future redistribution, provide recipients a readable license copy and retain applicable attribution and NOTICE content.
-Identify the repackaging as an audio.cpp conversion of the pinned FP32 checkpoint with assets extracted from the pinned `.cact`.
+Identify the repackaging as a native SDK conversion of the pinned FP32 checkpoint with assets extracted from the pinned `.cact`.
 No downloadable package or redistribution approval is claimed here.
 
 ## Reference implementations

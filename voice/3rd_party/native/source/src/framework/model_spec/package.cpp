@@ -535,7 +535,7 @@ std::optional<std::filesystem::path> find_contract_spec_path(std::string_view fa
         const auto & embedded = embedded_model_spec();
         if (!embedded.has_value()) {
             throw std::runtime_error("GGUF for family '" + std::string(family) +
-                                     "' does not embed an audio.cpp model spec: " + gguf->string() +
+                                     "' does not embed a native model spec: " + gguf->string() +
                                      ". Published GGUF packages must embed a model spec; regenerate the GGUF "
                                      "or pass --model-spec-override.");
         }

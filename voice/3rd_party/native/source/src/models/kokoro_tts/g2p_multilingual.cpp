@@ -53,7 +53,7 @@ public:
         else {
             std::wstring exe(32768, L'\0');
             const auto n = GetModuleFileNameW(nullptr, exe.data(), static_cast<DWORD>(exe.size()));
-            if (!n || n >= exe.size()) throw std::runtime_error("Cannot locate the audio.cpp executable");
+            if (!n || n >= exe.size()) throw std::runtime_error("Cannot locate the native SDK executable");
             exe.resize(n);
             path = std::filesystem::path(exe).parent_path() / windows_name;
         }

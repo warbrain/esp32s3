@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Convert OuteTTS 1.0's official IBM DAC checkpoint to safetensors.
 
-The official OuteTTS runtime loads a trusted PyTorch checkpoint. audio.cpp uses
+The official OuteTTS runtime loads a trusted PyTorch checkpoint. native SDK uses
 the resulting plain tensor source for both native safetensors loading and GGUF
 packing; no Python or pickle loader is needed at inference time.
 """

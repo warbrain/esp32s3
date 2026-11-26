@@ -187,7 +187,7 @@ modules::CausalDecoderConfig decoder_config(
     out.stack.rope_theta = c.rope_theta;
     // Hugging Face Llama weights use split-half rotary pairs. llama.cpp's
     // dedicated Llama converter permutes Q/K and then uses NORMAL RoPE, while
-    // audio.cpp preserves the source tensor layout in safetensors and GGUF.
+    // native SDK preserves the source tensor layout in safetensors and GGUF.
     out.stack.rope_type = GGML_ROPE_TYPE_NEOX;
     out.stack.use_qk_norm = false;
     out.stack.runtime.attention.prefill_mode = modules::DecoderAttentionMode::FlashGroupedViewKV;

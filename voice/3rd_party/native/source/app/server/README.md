@@ -1,6 +1,6 @@
-# audio.cpp Server
+# native SDK Server
 
-`audiocpp_server` exposes audio.cpp models through HTTP and an optional WebUI.
+`audiocpp_server` exposes native SDK models through HTTP and an optional WebUI.
 The default runtime reuses each loaded model and its configured task session
 across requests. You can register several models in one config; this does not
 require the experimental parallel runtime.
@@ -145,7 +145,7 @@ curl --fail-with-body http://127.0.0.1:8080/health
 curl --fail-with-body http://127.0.0.1:8080/v1/models
 curl --fail-with-body http://127.0.0.1:8080/v1/audio/speech \
   -H 'Content-Type: application/json' \
-  -d '{"model":"kokoro","input":"Welcome. This speech is generated locally with audio.cpp."}' \
+  -d '{"model":"kokoro","input":"Welcome. This speech is generated locally with native SDK."}' \
   -o speech.wav
 ```
 
@@ -303,7 +303,7 @@ individual model entries:
 }
 ```
 
-The indices use audio.cpp's backend device order; run the server with
+The indices use native SDK's backend device order; run the server with
 `--list-devices` to inspect it, or `--list-devices --json` for PCI ids and
 free/total memory in [JSON](../../docs/usage.md#listing-devices). Each model remains wholly on one device: this
 setting assigns models independently and does not split one model across GPUs.
@@ -817,12 +817,12 @@ for nginx and client constraints.
 ## Optional frontend modules and listeners
 
 These are build-time extensions from the external
-[server-frontends repository](https://github.com/0xShug0/audio.cpp-server-frontends),
+[server-frontends repository](https://github.com/0xShug0/audio%2Ecpp-server-frontends),
 not model options or part of the default server dependency set.
 
 | Need | Build settings | Runtime settings |
 |---|---|---|
-| Audio decoding / MP3 encoding | `-DAUDIOCPP_BUILD_SERVER_FRONTENDS=ON -DAUDIOCPP_SERVER_FRONTENDS_DIR=external/audio.cpp-server-frontends -DAUDIOCPP_SERVER_FRONTEND_MODULES="audio_decode;mp3_encode"` | Use the extended audio formats on supported routes. |
+| Audio decoding / MP3 encoding | `-DAUDIOCPP_BUILD_SERVER_FRONTENDS=ON -DAUDIOCPP_SERVER_FRONTENDS_DIR=external/audio"."cpp-server-frontends -DAUDIOCPP_SERVER_FRONTEND_MODULES="audio_decode;mp3_encode"` | Use the extended audio formats on supported routes. |
 | Frontend-owned transport, such as HTTPS or WebSocket | Same frontend build flags, with `-DAUDIOCPP_SERVER_FRONTEND_MODULES=<listener>` | `--frontend-listener <listener>` and repeated `--frontend-option key=value` |
 
 Optional frontend modules are selected at configure time with the semicolon-separated
@@ -831,7 +831,7 @@ Optional frontend modules are selected at configure time with the semicolon-sepa
 fetch it before configuring:
 
 ```bash
-git submodule update --init external/audio.cpp-server-frontends
+git submodule update --init external/audio"."cpp-server-frontends
 ```
 
 For a fresh clone, `git clone --recurse-submodules` also fetches it.

@@ -57,7 +57,7 @@ if (NOT AUDIOCPP_USE_SYSTEM_OPENSSL)
 
     # Some packagers (notably Nix) inject a global -Werror. Do not let the
     # parent project's warning policy turn compatibility warnings inside the
-    # pinned third-party TLS implementation into audio.cpp build failures.
+    # pinned third-party TLS implementation into native SDK build failures.
     # Discover targets recursively instead of naming only crypto/ssl: Nix's
     # default all-target build also compiles auxiliary libraries such as
     # decrepit, and BoringSSL may add further subdirectory targets over time.

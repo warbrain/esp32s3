@@ -5,7 +5,7 @@ The official checkpoint stores raw PyTorch module state-dict entries where the
 encoder/decoder causal convolutions carry new-style weight-norm
 parametrizations (`*.parametrizations.weight.original{0,1}`) and the vector
 quantizer projections carry legacy weight-norm parameters (`*.weight_g/v`).
-audio.cpp binds fused plain weights (`*.conv.weight`, `*.in_proj.weight`,
+native SDK binds fused plain weights (`*.conv.weight`, `*.in_proj.weight`,
 ...), mirroring the forward math of `modeling_arktts_codec.py`
 (`weight = g * v / ||v||`, norm over all but the output-channel axis).
 

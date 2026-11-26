@@ -267,7 +267,7 @@ build_speech_request(const Value &body, const SpeechRequestContext &context) {
 static bool is_missing_model_contract_error(std::string_view message) {
   return message.find("model contract spec not found for family '") !=
              std::string_view::npos ||
-         message.find("does not embed an audio.cpp model spec") !=
+         message.find("does not embed a native model spec") !=
              std::string_view::npos ||
          message.find("embeds a legacy model spec") != std::string_view::npos;
 }

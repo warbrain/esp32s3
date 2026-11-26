@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 """
-convert_soprano.py -- Convert Soprano-1.1-80M for audio.cpp's ``soprano_tts`` family.
+convert_soprano.py -- Convert Soprano-1.1-80M for native SDK's ``soprano_tts`` family.
 
 The HF checkpoint ships two artifacts:
   * ``model.safetensors``   - the Qwen3-style causal LM (no weight norm).
   * ``decoder.pth``         - a PyTorch ``SopranoDecoder`` that applies
                               ``torch.nn.utils.weight_norm`` on its conv/linear
-                              weights. audio.cpp cannot evaluate weight-norm at
+                              weights. native SDK cannot evaluate weight-norm at
                               load time, so this script *folds* it.
 
 Output layout (matches ``model_specs/soprano_tts.json`` ``sources``, which maps
@@ -86,10 +86,10 @@ def fold_weight_norm(state: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------- #
-# Decoder tensor renaming (Soprano nn.Module -> audio.cpp binding keys)
+# Decoder tensor renaming (Soprano nn.Module -> native SDK binding keys)
 # ---------------------------------------------------------------------------- #
 def rename_decoder_keys(state: dict) -> dict:
-    """Map SopranoDecoder state names onto the keys the audio.cpp decoder
+    """Map SopranoDecoder state names onto the keys the native SDK decoder
     loader expects (the same prefixes used by the `vevo2` Vocoder):
 
         decoder.embed                Conv1d(512 -> 768, k=1, pad 0, bias=true)
@@ -112,7 +112,7 @@ def rename_decoder_keys(state: dict) -> dict:
 
 
 def _map_key(key: str):
-    """Map a Soprano state-dict key to the audio.cpp 'decoder.' namespace.
+    """Map a Soprano state-dict key to the native SDK 'decoder.' namespace.
 
     Soprano names: ``decoder.embed.weight``, ``decoder.norm.weight``,
     ``decoder.convnext.N.dwconv.weight``, ``decoder.convnext.N.gamma``,
@@ -216,7 +216,7 @@ def main() -> int:
     backbone_count = len(entries)
 
     # Fold + rename decoder, then merge into the same file under the
-    # "decoder." namespace (audio.cpp distinguishes the two sources by key).
+    # "decoder." namespace (native SDK distinguishes the two sources by key).
     # The ISTFT window (head.istft.window) is part of the checkpoint state
     # dict and passes through like every other decoder tensor; the loader
     # requires it, so a checkpoint without it fails loudly at inference time.

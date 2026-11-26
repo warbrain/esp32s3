@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert MiniMax Music 3 weights into the audio.cpp GGUF package layout."""
+"""Convert MiniMax Music 3 weights into the native SDK GGUF package layout."""
 
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ def parse_args() -> argparse.Namespace:
         "--audiocpp-gguf",
         type=Path,
         default=REPO_ROOT / "build" / "debug" / "bin" / "audiocpp_gguf",
-        help="Path to the audio.cpp GGUF conversion binary.",
+        help="Path to the native SDK GGUF conversion binary.",
     )
     parser.add_argument(
         "--type",

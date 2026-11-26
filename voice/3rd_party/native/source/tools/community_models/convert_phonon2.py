@@ -244,7 +244,7 @@ def convert(source: Path, reference: Path, output: Path) -> Path:
             arr = tensors[name]
             if name.endswith(".num_batches_tracked"):
                 # Training-only BatchNorm counters may be stored as infinity.
-                # Neither audio.cpp nor the reference eval graph reads them.
+                # Neither native SDK nor the reference eval graph reads them.
                 counters.append(name)
                 del tensors[name]
                 continue

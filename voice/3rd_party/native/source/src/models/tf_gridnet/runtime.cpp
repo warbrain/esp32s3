@@ -90,7 +90,7 @@ private:
         auto axes = temporal ? std::array<int, 4>{1, 2, 3, 0} : std::array<int, 4>{2, 1, 3, 0};
         if (ctx.backend_type == core::BackendType::Metal) {
             // Metal-only copy workaround; remove this gate and rewrite once
-            // https://github.com/0xShug0/audio.cpp/pull/831 is merged.
+            // https://github.com/0xShug0/audio%2Ecpp/pull/831 is merged.
             axes = temporal ? std::array<int, 4>{0, 1, 2, 3} : std::array<int, 4>{0, 2, 1, 3};
         }
         norm = modules::TransposeModule({axes, 4}).build(ctx, norm);

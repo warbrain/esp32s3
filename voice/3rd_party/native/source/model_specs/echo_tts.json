@@ -2,7 +2,7 @@
   "schema_version": 1,
   "family": "echo_tts",
   "display_name": "Echo-TTS",
-  "description": "Echo-TTS is an English zero-shot voice-cloning TTS model packaged for audio.cpp. A 2.8B diffusion transformer generates 80-D latents in PCA space which the Fish S1-DAC decodes to 44.1 kHz audio. Generation is a fixed 29.72 s window (640 latents).",
+  "description": "Echo-TTS is an English zero-shot voice-cloning TTS model packaged for native SDK. A 2.8B diffusion transformer generates 80-D latents in PCA space which the Fish S1-DAC decodes to 44.1 kHz audio. Generation is a fixed 29.72 s window (640 latents).",
   "category": "tts",
   "status": "experimental",
   "tasks": [

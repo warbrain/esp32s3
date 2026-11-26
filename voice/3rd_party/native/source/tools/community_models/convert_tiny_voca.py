@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pack tiny-voca as one GGUF file for audio.cpp.
+"""Pack tiny-voca as one GGUF file for native SDK.
 
     python tools/community_models/convert_tiny_voca.py \
         --source /path/to/tiny-voca --output models/tiny-voca-GGUF/tiny-voca-orig.gguf
@@ -40,7 +40,7 @@ def model_tensors(checkpoint):
 
 
 def write_model_directory(source, root):
-    """The files audio.cpp reads, in a folder: it can be loaded as it is, too."""
+    """The files native SDK reads, in a folder: it can be loaded as it is, too."""
     root.mkdir(parents=True, exist_ok=True)
     (root / "phonemizer").mkdir(exist_ok=True)
     shutil.copyfile(source / "config.json", root / "config.json")

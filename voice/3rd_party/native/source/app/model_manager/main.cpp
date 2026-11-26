@@ -22,7 +22,7 @@ struct Arguments {
 
 void print_usage(std::ostream & output) {
     output <<
-        "audio.cpp native model package manager\n\n"
+        "native SDK native model package manager\n\n"
         "Usage:\n"
         "  audiocpp_model_manager list [--remote] [--models-root PATH] [--repository-root PATH]\n"
         "  audiocpp_model_manager info PACKAGE [--remote] [--models-root PATH] [--repository-root PATH]\n"

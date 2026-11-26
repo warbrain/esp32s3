@@ -5,7 +5,7 @@ the phonemizer of tiny-voca. For the same data files it gives the same phoneme
 ids as the Python package.
 
 This folder stands alone. It uses the C++17 standard library and nothing else,
-and nothing in it includes audio.cpp code. The model's `frontend.cpp`, one
+and nothing in it includes native SDK code. The model's `frontend.cpp`, one
 folder up, connects it to the framework.
 
 ```cpp
@@ -20,7 +20,7 @@ dizione::Phonemized result = phonemizer.phonemize("Hello, it costs $3.50.");
 `homographs.json`, the files under `phonemizer/` in the
 [tiny-voca model repository](https://huggingface.co/n4ze3m/tiny-voca). A
 `Phonemizer` can also be made from the contents of those files (`dizione::Data`),
-which is how audio.cpp gives it the files stored in a GGUF.
+which is how native SDK gives it the files stored in a GGUF.
 
 One `Phonemizer` serves one thread at a time. It keeps the dictionary as the
 text of the file with an index of four bytes a word, so the 125,000 words

@@ -70,7 +70,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("cpp_dir", type=Path)
     parser.add_argument("py_dir", type=Path)
-    parser.add_argument("--title", default="MOSS-TTS-Local: audio.cpp vs Python reference")
+    parser.add_argument("--title", default="MOSS-TTS-Local: native SDK vs Python reference")
     parser.add_argument("--cases", type=Path, action="append", default=[])
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()

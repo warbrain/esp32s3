@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package an official MOSS-SoundEffect v2 checkpoint for audio.cpp."""
+"""Package an official MOSS-SoundEffect v2 checkpoint for native SDK."""
 from __future__ import annotations
 
 import argparse

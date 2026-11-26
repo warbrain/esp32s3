@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare Soprano TTS outputs between Python reference and audio.cpp C++ implementation.
+"""Compare Soprano TTS outputs between Python reference and native SDK C++ implementation.
 
 Usage:
     python3 tools/community_models/soprano_tts/compare_parity.py
@@ -121,7 +121,7 @@ def main():
         })
     
     print("\n" + "=" * 60)
-    print("RTF of audio.cpp C++ implementation on CPU:")
+    print("RTF of native SDK C++ implementation on CPU:")
     print(f"{'Test':<8} {'Chars':<8} {'Audio(s)':<12} {'Infer(s)':<12} {'RTF':<10}")
     print("-" * 50)
     for r in results:

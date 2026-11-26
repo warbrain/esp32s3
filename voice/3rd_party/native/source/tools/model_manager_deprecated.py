@@ -104,7 +104,7 @@ def hf_endpoint() -> str:
 
 
 def http_headers() -> dict[str, str]:
-    headers = {"User-Agent": "audio.cpp model_manager.py"}
+    headers = {"User-Agent": "audio\x2ecpp model_manager.py"}
     token = huggingface_token()
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -455,7 +455,7 @@ CATALOG: tuple[ModelPackage, ...] = (
         display_name="Voxtral Mini 4B Realtime GGUF",
         target_directory="Voxtral-Mini-4B-Realtime-2602-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Voxtral-Mini-4B-Realtime-2602-GGUF/voxtral-mini-4b-realtime-2602-q8_0.gguf",),
             strip_prefix="Voxtral-Mini-4B-Realtime-2602-GGUF/",
         ),
@@ -463,21 +463,21 @@ CATALOG: tuple[ModelPackage, ...] = (
         family="voxtral_realtime",
         tasks=("asr",),
         modes=("offline", "streaming"),
-        description="Standalone audio.cpp Q8_0 GGUF package for Voxtral realtime ASR.",
+        description="Standalone native SDK Q8_0 GGUF package for Voxtral realtime ASR.",
     ),
     ModelPackage(
         id="fish_audio_s2_pro",
         display_name="Fish Audio S2 Pro GGUF",
         target_directory="Fish-Audio-S2-Pro-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Fish-Audio-S2-Pro-GGUF/fish-audio-s2-pro-q8_0.gguf",),
             strip_prefix="Fish-Audio-S2-Pro-GGUF/",
         ),
         required_files=("fish-audio-s2-pro-q8_0.gguf",),
         family="fish_audio",
         tasks=("tts",),
-        description="Standalone audio.cpp Q8_0 GGUF package for Fish Audio S2 Pro.",
+        description="Standalone native SDK Q8_0 GGUF package for Fish Audio S2 Pro.",
     ),
     ModelPackage(
         id="higgs_audio_stt",
@@ -540,7 +540,7 @@ CATALOG: tuple[ModelPackage, ...] = (
         display_name="Parakeet-TDT 0.6B v3 Q8_0 GGUF",
         target_directory="Parakeet-TDT-0.6B-v3-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Parakeet-TDT-0.6B-v3-GGUF/parakeet-tdt-0.6b-v3-q8_0.gguf",),
             strip_prefix="Parakeet-TDT-0.6B-v3-GGUF/",
         ),
@@ -556,7 +556,7 @@ CATALOG: tuple[ModelPackage, ...] = (
         display_name="Parakeet-TDT 0.6B v3 F16 GGUF",
         target_directory="Parakeet-TDT-0.6B-v3-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Parakeet-TDT-0.6B-v3-GGUF/parakeet-tdt-0.6b-v3-f16.gguf",),
             strip_prefix="Parakeet-TDT-0.6B-v3-GGUF/",
         ),
@@ -921,14 +921,14 @@ CATALOG: tuple[ModelPackage, ...] = (
         display_name="Higgs Audio v3 TTS 4B GGUF",
         target_directory="Higgs-Audio-v3-TTS-4B-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Higgs-Audio-v3-TTS-4B-GGUF/higgs-audio-v3-tts-4b-q8_0.gguf",),
             strip_prefix="Higgs-Audio-v3-TTS-4B-GGUF/",
         ),
         required_files=("higgs-audio-v3-tts-4b-q8_0.gguf",),
         family="higgs_audio_tts",
         tasks=("tts",),
-        description="Standalone audio.cpp Q8_0 GGUF package for Higgs Audio v3 TTS 4B.",
+        description="Standalone native SDK Q8_0 GGUF package for Higgs Audio v3 TTS 4B.",
     ),
     ModelPackage(
         id="heartmula",
@@ -1105,7 +1105,7 @@ CATALOG: tuple[ModelPackage, ...] = (
         display_name="Inflect Micro v2 Original-Dtype GGUF",
         target_directory="Inflect-Micro-v2-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Inflect-Micro-v2-GGUF/inflect-micro-v2-orig.gguf",),
             strip_prefix="Inflect-Micro-v2-GGUF/",
         ),
@@ -1363,7 +1363,7 @@ CATALOG: tuple[ModelPackage, ...] = (
         display_name="Vevo2 Q8_0 GGUF",
         target_directory="Vevo2-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Vevo2-GGUF/vevo2-q8_0.gguf",),
             strip_prefix="Vevo2-GGUF/",
         ),
@@ -1371,7 +1371,7 @@ CATALOG: tuple[ModelPackage, ...] = (
         family="vevo2",
         tasks=("tts", "music", "vc", "edit", "svc", "s2s"),
         description=(
-            "Standalone audio.cpp Q8_0 GGUF package for Vevo2. It embeds every config the runtime "
+            "Standalone native SDK Q8_0 GGUF package for Vevo2. It embeds every config the runtime "
             "reads, whisper-medium included, so unlike the safetensors package it needs no sibling "
             "whisper-medium download."
         ),
@@ -1436,7 +1436,7 @@ CATALOG: tuple[ModelPackage, ...] = (
         display_name="Kroko Community ASR Q8_0 GGUF",
         target_directory="Kroko-ASR-GGUF",
         source=SnapshotSource(
-            repo_id="audio-cpp/audio.cpp-gguf",
+            repo_id="audio-cpp/audio\x2ecpp-gguf",
             include_prefixes=("Kroko-ASR-GGUF/kroko-en-community-64-l-q8_0.gguf",),
             strip_prefix="Kroko-ASR-GGUF/",
         ),

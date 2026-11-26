@@ -148,7 +148,7 @@
     {
       "id": "fun_asr_nano_2512_q8_0",
       "display_name": "Fun-ASR-Nano-2512 Q8_0 GGUF",
-      "description": "Standalone audio.cpp GGUF built from the pinned official checkpoint; governed by the FunASR Model Open Source License Agreement v1.1.",
+      "description": "Standalone native SDK GGUF built from the pinned official checkpoint; governed by the FunASR Model Open Source License Agreement v1.1.",
       "default": true,
       "format": "gguf",
       "precision": "q8_0",
@@ -166,7 +166,7 @@
     {
       "id": "fun_asr_nano_2512_f16",
       "display_name": "Fun-ASR-Nano-2512 F16 GGUF",
-      "description": "Standalone audio.cpp GGUF built from the pinned official checkpoint; governed by the FunASR Model Open Source License Agreement v1.1.",
+      "description": "Standalone native SDK GGUF built from the pinned official checkpoint; governed by the FunASR Model Open Source License Agreement v1.1.",
       "format": "gguf",
       "precision": "f16",
       "target_directory": "Fun-ASR-Nano-2512-GGUF",
@@ -215,7 +215,7 @@
       "docs/asr.md",
       "docs/gguf.md"
     ],
-    "summary": "Offline Fun-ASR-Nano transcription from official safetensors or audio.cpp GGUF."
+    "summary": "Offline Fun-ASR-Nano transcription from official safetensors or native SDK GGUF."
   },
   "sources": [
     {

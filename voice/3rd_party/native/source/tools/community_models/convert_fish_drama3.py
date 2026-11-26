@@ -8,7 +8,7 @@
 # url = "https://download.pytorch.org/whl/cpu"
 # explicit = true
 # ///
-"""Convert Drama 3's scaled FP8 experts into a native audio.cpp GGUF package.
+"""Convert Drama 3's scaled FP8 experts into a native SDK GGUF package.
 
 Uses CPU memory one expert bank at a time. The optional native converter stage
 folds codec weight norms, embeds tokenizer/config files, and applies mixed

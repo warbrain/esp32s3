@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert IBM Granite Speech 5.0 470M TurboCTC safetensors checkpoints to audio.cpp GGUF packages.
+"""Convert IBM Granite Speech 5.0 470M TurboCTC safetensors checkpoints to native SDK GGUF packages.
 
 Produces a self-contained GGUF with weights from model.safetensors and copies
 tokenizer.json and config.json alongside it, giving a complete model directory

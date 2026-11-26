@@ -99,7 +99,7 @@
   "package_defaults": {
     "download": {
       "kind": "huggingface_snapshot",
-      "repo": "audio-cpp/audio.cpp-gguf",
+      "repo": "audio-cpp/audio\u002ecpp-gguf",
       "revision": "main",
       "gated": false
     }
@@ -162,7 +162,7 @@
       "strip_prefix": "ACE-Step1.5-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "CaptainArni/audio.cpp-gguf"
+        "repo": "CaptainArni/audio\u002ecpp-gguf"
       }
     },
     {
@@ -177,7 +177,7 @@
       "strip_prefix": "ACE-Step1.5-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "CaptainArni/audio.cpp-gguf"
+        "repo": "CaptainArni/audio\u002ecpp-gguf"
       }
     },
     {
@@ -192,7 +192,7 @@
       "strip_prefix": "ACE-Step1.5-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "CaptainArni/audio.cpp-gguf"
+        "repo": "CaptainArni/audio\u002ecpp-gguf"
       }
     },
     {
@@ -207,7 +207,7 @@
       "strip_prefix": "ACE-Step1.5-GGUF",
       "download": {
         "kind": "huggingface_snapshot",
-        "repo": "CaptainArni/audio.cpp-gguf"
+        "repo": "CaptainArni/audio\u002ecpp-gguf"
       }
     }
   ],

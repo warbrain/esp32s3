@@ -400,7 +400,7 @@ static vk_device_architecture get_device_architecture(const vk::PhysicalDevice& 
 // integerDotProduct4x8BitPackedSignedAccelerated on GPUs without native dot4
 // hardware (GCN/RDNA1/RDNA2): the emulated integer dot product path silently
 // produces incorrect quantized matmul results
-// (https://github.com/0xShug0/audio.cpp/issues/192). RADV reports
+// (https://github.com/0xShug0/audio%2Ecpp/issues/192). RADV reports
 // accelerated=false on the same hardware, and RDNA3+ has native dot4 support.
 static bool ggml_vk_amd_proprietary_emulated_int_dot(uint32_t vendor_id, vk::DriverId driver_id, vk_device_architecture architecture) {
     return vendor_id == VK_VENDOR_ID_AMD && driver_id == vk::DriverId::eAmdProprietary &&

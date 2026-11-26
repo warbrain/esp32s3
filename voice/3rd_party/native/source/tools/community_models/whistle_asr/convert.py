@@ -1,4 +1,4 @@
-"""Repackage the official Cactus Whistle checkpoint as an experimental audio.cpp GGUF.
+"""Repackage the official Cactus Whistle checkpoint as an experimental native SDK GGUF.
 
 Pin Cactus-Compute/whistle at b358ddadd89b7a713b5aa131f23032d3cca1b251.
 The checkpoint supplies FP32 weights; whistle.cact supplies the custom tokenizer,

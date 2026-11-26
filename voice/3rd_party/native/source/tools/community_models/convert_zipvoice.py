@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Convert ZipVoice / ZipVoice-Distill torch checkpoints to audio.cpp packages.
+"""Convert ZipVoice / ZipVoice-Distill torch checkpoints to native SDK packages.
 
 ZipVoice (https://github.com/k2-fsa/ZipVoice, k2-fsa/ZipVoice on HuggingFace)
 ships `model.pt` checkpoints (a pickled dict with a "model" state dict), a
-`model.json` architecture config, and a `tokens.txt` phone vocab. audio.cpp
+`model.json` architecture config, and a `tokens.txt` phone vocab. native SDK
 cannot read the nested pickle directly, so this script first flattens the
 state dict to safetensors (the development format) and then packages it into
 a self-contained GGUF with two tensor namespaces:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert Audio8/Audio8-ASR-0.1B safetensors checkpoints to audio.cpp GGUF packages.
+"""Convert Audio8/Audio8-ASR-0.1B safetensors checkpoints to native SDK GGUF packages.
 
 Produces a self-contained GGUF with weights from model.safetensors and embeds
 the config/tokenizer sidecars, giving a complete model directory that

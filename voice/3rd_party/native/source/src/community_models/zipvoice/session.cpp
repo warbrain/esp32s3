@@ -89,7 +89,7 @@ std::shared_ptr<const ZipVoiceAssets> load_assets(const std::filesystem::path & 
     auto holder = std::make_shared<ZipVoiceAssets>();
     // Spec-resolved bundle: registered sidecars (tokens, model_config and the
     // optional zh_* frontend tables) resolve to materialized GGUF-embedded
-    // copies or development-directory files; audio.cpp community models
+    // copies or development-directory files; native SDK community models
     // (audio8_asr, vibeasr, glm_tts, ...) follow the same pattern.
     holder->resources = engine::model_spec::load_resource_bundle_for_family(model_path, kFamily);
     holder->checkpoint = find_checkpoint(model_path);

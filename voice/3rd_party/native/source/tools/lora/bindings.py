@@ -1,4 +1,4 @@
-"""Model-local adapter names bound to complete audio.cpp GGUF tensor names."""
+"""Model-local adapter names bound to complete native SDK GGUF tensor names."""
 
 from dataclasses import dataclass
 import json

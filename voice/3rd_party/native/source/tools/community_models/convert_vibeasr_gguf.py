@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a VibeASR.cpp GGUF into an audio.cpp GGUF package.
+"""Convert a VibeASR.cpp GGUF into a native SDK GGUF package.
 
 Upstream: https://github.com/microsoft/VibeASR.cpp
 Weights:  https://huggingface.co/microsoft/VibeVoice-ASR-BitNet
@@ -9,7 +9,7 @@ ternary I2_S language model -- because they need exactly the same fix and
 nothing else. VibeASR.cpp ships both already quantized by its own ggml fork, so
 there is nothing to re-quantize here. The only thing that differs is the numeric
 type id: the VibeASR fork picked 36 (I2_S) and 37 (I8_S), which upstream ggml had
-already used for the retired IQ4_NL_4_4 / IQ4_NL_4_8 slots. audio.cpp therefore
+already used for the retired IQ4_NL_4_4 / IQ4_NL_4_8 slots. native SDK therefore
 registers the same two types at 42 (I8_S) and 43 (I2_S). Tensors of any other
 type in the file -- the LM's Q6_K token embedding, its F16 output projection, and
 every F32 norm and bias -- are already portable and pass through untouched.
@@ -48,8 +48,8 @@ from pathlib import Path
 
 GGUF_MAGIC = b"GGUF"
 
-# VibeASR.cpp fork id -> audio.cpp id. See external/ggml/include/ggml.h for why
-# audio.cpp cannot reuse 36/37.
+# VibeASR.cpp fork id -> native SDK id. See external/ggml/include/ggml.h for why
+# native SDK cannot reuse 36/37.
 TYPE_REMAP = {36: 43, 37: 42}
 
 TYPE_NAMES = {0: "f32", 1: "f16", 8: "q8_0", 14: "q6_k", 42: "i8_s", 43: "i2_s"}
@@ -185,7 +185,7 @@ def list_tensors(infos) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--input", type=Path, required=True, help="VibeASR.cpp GGUF (VAE encoder or LM)")
-    parser.add_argument("--output", type=Path, help="audio.cpp GGUF to write")
+    parser.add_argument("--output", type=Path, help="native SDK GGUF to write")
     parser.add_argument("--in-place", action="store_true", help="rewrite --input itself instead of writing a copy")
     parser.add_argument("--list", action="store_true", help="print the tensor table and exit")
     parser.add_argument("--check", action="store_true", help="exit non-zero if any tensor still needs remapping")
@@ -208,18 +208,18 @@ def main() -> int:
         if stale:
             print(f"{args.input}: {len(stale)} tensors still use VibeASR fork type ids", file=sys.stderr)
             return 1
-        print(f"{args.input}: type ids are already audio.cpp native")
+        print(f"{args.input}: type ids are already native SDK native")
         return 0
 
     if args.output is None:
         parser.error("--output or --in-place is required unless --list or --check is given")
 
-    # Guard against a double conversion: the fork ids and the audio.cpp ids are
+    # Guard against a double conversion: the fork ids and the native SDK ids are
     # both valid ggml types, so a second pass would silently corrupt nothing but
     # would also hide a mistake in the source package.
     already = [info for info in infos if info["type"] in set(TYPE_REMAP.values())]
     if already and stale:
-        raise SystemExit("input mixes VibeASR fork type ids with audio.cpp ids")
+        raise SystemExit("input mixes VibeASR fork type ids with native SDK ids")
     if not stale:
         print(f"{args.input}: nothing to remap, copying through")
 

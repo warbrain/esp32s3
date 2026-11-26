@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a trained microWakeWord TFLite model to audio.cpp GGUF.
+"""Convert a trained microWakeWord TFLite model to native SDK GGUF.
 
 The converter accepts the stateful MixedNet TFLite graph emitted by the
 microWakeWord training project. It preserves tensor quantization metadata so
